@@ -20,7 +20,7 @@ MqttBroker broker(PORT);
   */
 
 const char* ssid = "HiFiWiFi";
-const char* password = "01248163264128";
+const char* password = "";
 
 void setup() 
 {
