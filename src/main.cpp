@@ -2,7 +2,7 @@
 #include <TinyMqtt.h>   // https://github.com/hsaturn/TinyMqtt
 #include <ESPmDNS.h>
 
-#include <credentials.h>
+#include <credentials/credentials.h>
 #include <globals.h>
 
 /** 
