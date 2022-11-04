@@ -61,7 +61,7 @@ void setup()
   Serial << "Clients with wifi " << endl;
 
 	if (strlen(ssid)==0)
-		Serial << "****** PLEASE EDIT THE EXAMPLE AND MODIFY ssid/password *************" << endl;
+		Serial << "****** RENAME CREDENTIALS-DEFAULT.H to CREDENTIALS.H and add SSID/PASSWORD *************" << endl;
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
