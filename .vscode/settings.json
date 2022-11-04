@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.ini": "ini",
+        "system_error": "cpp"
+    }
+}
