@@ -2,66 +2,37 @@
 #include <TinyMqtt.h>   // https://github.com/hsaturn/TinyMqtt
 #include <ESPmDNS.h>
 
-#include <credentials/credentials.h>
-#include <globals.h>
+#include <Credentials/Credentials.h>
+#include <Globals.h>
 
-/** 
-  * Local broker that accept connections and two local clients
-  *
-  * 
-  *  +-----------------------------+
-  *  | ESP                         |
-  *  |                 +--------+  | 1883 <--- External client/s
-  *  |       +-------->| broker |  | 1883 <--- External client/s
-  *  |       |         +--------+  |
-  *  |       |             ^       |
-  *  |       |             |       |
-  *  |       |             |       |     -----
-  *  |       v             v       |      ---  
-  *  | +----------+  +----------+  |       -  
-  *  | | internal |  | internal |  +-------*  Wifi
-  *  | | client   |  | client   |  |          
-  *  | +----------+  +----------+  |          
-  *  |                             |
-  *  +-----------------------------+
-  * 
-  * pros - Reduces internal latency (when publish is received by the same ESP)
-  *      - Reduces wifi traffic
-  *      - No need to have an external broker
-  *      - can still report to a 'main' broker (TODO see documentation that have to be written)
-  *      - accepts external clients
-  *
-  * cons - Takes more memory
-  *      - a bit hard to understand
-  *
-  */
+#include <Network/NetworkManager.h>
 
-const char *ssid     = WIFI_SSID;
-const char *password = WIFI_PWD;
+NetworkManager networkManager;
 
-std::string topic="sensor/temperature";
-
+/*std::string topic="sensor/temperature";
 MqttBroker broker(1883);
-
 MqttClient mqtt_a(&broker);
 MqttClient mqtt_b(&broker);
 
-void onPublishA(const MqttClient* /* source */, const Topic& topic, const char* payload, size_t /* length */)
+void onPublishA(const MqttClient*, const Topic& topic, const char* payload, size_t )
 { Serial << "--> client A received " << topic.c_str() << ", " << payload << endl; }
 
-void onPublishB(const MqttClient* /* source */, const Topic& topic, const char* payload, size_t /* length */)
+void onPublishB(const MqttClient* , const Topic& topic, const char* payload, size_t )
 { Serial << "--> client B Received " << topic.c_str() << ", " << payload << endl; }
 
-bool startBroker = false;
+bool startBroker = false;*/
 
 void setup()
 {
   Serial.begin(115200);
   delay(500);
-  Serial << "Clients with wifi " << endl;
+  
+ networkManager.initWifi();
+ networkManager.initBroker();
+ networkManager.initMdns();
 
-	if (strlen(ssid)==0)
-		Serial << "****** RENAME CREDENTIALS-DEFAULT.H to CREDENTIALS.H and add SSID/PASSWORD *************" << endl;
+	/*if (strlen(ssid)==0)
+		Serial << "****** RENAME Credentials-Default.h to Credentials.h and add SSID/PASSWORD *************" << endl;
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -120,13 +91,13 @@ void setup()
         Serial << "Port: " << MDNS.port(i) << endl;
       }
     }
-  }
+  }*/
   
 }
 
 void loop()
 {
-  if(startBroker){
+  /*if(startBroker){
 
     broker.loop();  // Don't forget to add loop for every broker and clients
 
@@ -155,5 +126,5 @@ void loop()
       timerB += intervalB;
       mqtt_b.publish(topic, " sent by B: "+std::string(String(16+temperature++%6).c_str()));
     }
-  }
+  }*/
 }
