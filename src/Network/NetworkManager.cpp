@@ -21,6 +21,10 @@ private functions
 
 #include "NetworkManager.h"
 
+void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
+	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
+}
+
 NetworkManager::NetworkManager() : _broker(BROKER_PORT) {
 	
 }
@@ -97,11 +101,6 @@ void NetworkManager::initClients(){
 	_clientState.subscribe(_topicState);
 
 }
-
-void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
-	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
-}
-
 
 void NetworkManager::loop(){
 	
