@@ -97,6 +97,8 @@ void setup()
 
 void loop()
 {
+  networkManager.loop();
+  
   /*if(startBroker){
 
     broker.loop();  // Don't forget to add loop for every broker and clients
@@ -124,7 +126,7 @@ void loop()
       static int temperature;
       Serial << "B is publishing " << topic.c_str() << endl;
       timerB += intervalB;
-      mqtt_b.publish(topic, " sent by B: "+std::string(String(16+temperature++%6).c_str()));
+      mqtt_b.publish(topic, " sent by B: " + std::string(String(16+temperature++%6).c_str()) );
     }
   }*/
 }

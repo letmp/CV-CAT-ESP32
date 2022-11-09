@@ -10,17 +10,23 @@
 
 class NetworkManager {
 	
+	
+
 	private:
 		IPAddress _ipAddress;
 		String _macAddress;
 		bool _localBroker = false;
 
-		MqttBroker _broker(int);
+		MqttBroker _broker;
 		IPAddress _brokerIp;
 		uint16_t _brokerPort;
 		
 		MqttClient _clientState;
+		std::string _topicState="states/update";
+
 		MqttClient _clientDataTransfer;
+
+		void updateState(const MqttClient*, const Topic& topic, const char* payload, size_t );
 
 	public:
 		

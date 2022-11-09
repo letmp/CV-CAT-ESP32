@@ -21,7 +21,7 @@ private functions
 
 #include "NetworkManager.h"
 
-NetworkManager::NetworkManager(){
+NetworkManager::NetworkManager() : _broker(BROKER_PORT) {
 	
 }
 
@@ -48,7 +48,6 @@ void NetworkManager::initBroker(){
 	if (String(BROKER_MAC) == _macAddress){
 		Serial << "--- Starting local Broker ---" << endl;
 		_localBroker = true;
-		MqttBroker _broker(BROKER_PORT);
 		_broker.begin();
 	} 
 }
@@ -83,12 +82,41 @@ void NetworkManager::initMdns(){
 }
 
 void NetworkManager::initClients(){
+	Serial << "--- Starting clients --- " << endl;
 	if(_localBroker){
-		//MqttClient _clientState(&_broker);
-
+		Serial << "With local broker object" << endl;
+		MqttClient _clientState(&_broker);
+		MqttClient _clientDataTransfer(&_broker);
 	}
+	else {
+		Serial << "Connecting to broker with IP " << _brokerIp << ":" << _brokerPort << endl;
+		_clientState.connect(_brokerIp.toString().c_str(), _brokerPort);
+		_clientDataTransfer.connect(_brokerIp.toString().c_str(), _brokerPort);
+	}
+	_clientState.setCallback(stateUpdate);
+	_clientState.subscribe(_topicState);
+
 }
 
-void NetworkManager::loop(){
+void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
+	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
+}
 
+
+void NetworkManager::loop(){
+	
+	if(_localBroker) _broker.loop();
+
+	_clientState.loop();
+	_clientDataTransfer.loop();
+
+	static const int interval = 000;  // publishes every second
+    static uint32_t timer = millis() + interval;
+
+    if (millis() > timer)
+    {
+      Serial << "publishing " << _topicState.c_str() << endl;
+      timer += interval;
+      _clientState.publish(_topicState, " sent by stateUpdate from IP " + _ipAddress );
+    }
 }
