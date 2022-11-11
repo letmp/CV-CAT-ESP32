@@ -27,10 +27,11 @@ void setup()
   Serial.begin(115200);
   delay(500);
   
- networkManager.initWifi();
- networkManager.initBroker();
- networkManager.initMdns();
-
+  networkManager.initWifi();
+  networkManager.initBroker();
+  networkManager.initMdns();
+  networkManager.initClients();
+  
 	/*if (strlen(ssid)==0)
 		Serial << "****** RENAME Credentials-Default.h to Credentials.h and add SSID/PASSWORD *************" << endl;
 
