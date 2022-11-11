@@ -1,11 +1,10 @@
 #include "NetworkManager.h"
 
-void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
+/*void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
 	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
-}
+}*/
 
-NetworkManager::NetworkManager() : _broker(BROKER_PORT) {
-	
+NetworkManager::NetworkManager() : _broker(BROKER_PORT), _clientState(&_broker), _clientDataTransfer(&_broker){	
 }
 
 void NetworkManager::initWifi(){
@@ -25,19 +24,17 @@ void NetworkManager::initWifi(){
 	_ipAddress = WiFi.localIP();
 	_macAddress = WiFi.macAddress();
 
+	if (_macAddress == String(BROKER_MAC)) this->isMaster = true;
 }
 
-void NetworkManager::initBroker(){
-	if (String(BROKER_MAC) == _macAddress){
-		Serial << "--- Starting local Broker ---" << endl;
-		_isMaster = true;
-		_broker.begin();
-	} 
+void NetworkManager::startBroker(){
+	Serial << "--- Starting local broker --- " << endl;
+	_broker.begin();	
 }
 
 void NetworkManager::initMdns(){
 	Serial << "--- Starting mDNS " ;
-	if (_isMaster){
+	if (isMaster){
 		while(!MDNS.begin(BROKER_HOSTNAME)){ Serial << '.'; delay(1000); }
 		MDNS.addService("mqtt", "tcp", BROKER_PORT);
 		Serial << " ---" << endl << "Responder started and mqtt service added" << endl;
@@ -66,14 +63,8 @@ void NetworkManager::initMdns(){
 
 void NetworkManager::initClients(){
 	Serial << "--- Starting clients --- " << endl;
-	if(_isMaster){
-		Serial << "Connecting to local broker" << endl;
-		/*MqttClient _clientState(&_broker);
-		MqttClient _clientDataTransfer(&_broker);
-		Serial << "Clientcount:" << _broker.clientsCount() << endl;
-		Serial << "ClientState connected? " << _clientState.connected() << endl;*/
-		_clientState.connect(_ipAddress.toString().c_str(), _brokerPort);
-		_clientDataTransfer.connect(_ipAddress.toString().c_str(), _brokerPort);
+	if(isMaster){
+		Serial << "Already connected to local broker" << endl;
 	}
 	else {
 		Serial << "Connecting to broker with IP " << _brokerIp << ":" << _brokerPort << endl;
@@ -81,14 +72,18 @@ void NetworkManager::initClients(){
 		_clientDataTransfer.connect(_brokerIp.toString().c_str(), _brokerPort);
 	}
 
-	_clientState.setCallback(stateUpdate);
+	_clientState.setCallback(NetworkManager::stateUpdate);
 	_clientState.subscribe(_topicState);
 
 }
 
+void NetworkManager::stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
+	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
+}
+
 void NetworkManager::loop(){
 	
-	if(_isMaster) _broker.loop();
+	if(isMaster) _broker.loop();
 
 	_clientState.loop();
 	_clientDataTransfer.loop();
@@ -102,4 +97,5 @@ void NetworkManager::loop(){
       timer += interval;
       _clientState.publish(_topicState, "update " + _ipAddress.toString());
     }
+  
 }

@@ -14,25 +14,26 @@ class NetworkManager {
 		IPAddress _ipAddress;
 		String _macAddress;
 		
-		bool _isMaster = false;
-
 		MqttBroker _broker;
 		IPAddress _brokerIp;
 		uint16_t _brokerPort;
 		
 		MqttClient _clientState;
+		MqttClient _clientDataTransfer;
 		std::string _topicState="states/update";
 
-		MqttClient _clientDataTransfer;
+		static void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t );
 
 	public:
+		bool isMaster = false;
 		
 		NetworkManager();
+		
 		void initWifi();
-		void initBroker();
+		void startBroker();
 		void initMdns();
 		void initClients();
-
+		
 		void loop();
 };
 
