@@ -1,10 +1,13 @@
 #include "NetworkManager.h"
 
-/*void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
-	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
-}*/
+#include <AsyncElegantOTA.h> // has to be included here instead of header file -> https://community.platformio.org/t/main-cpp-o-bss-asyncelegantota-0x0-multiple-definition-of-asyncelegantota/26733/3
 
-NetworkManager::NetworkManager() : _broker(BROKER_PORT), _clientState(&_broker), _clientDataTransfer(&_broker){	
+NetworkManager::NetworkManager() :
+	 _broker(BROKER_PORT),
+	 _clientState(&_broker),
+	 _clientDataTransfer(&_broker),
+	 _server(80)
+	 {	
 }
 
 void NetworkManager::initWifi(){
@@ -14,6 +17,7 @@ void NetworkManager::initWifi(){
 		Serial << "****** MISSING SSID! RENAME Credentials-Default.h to Credentials.h and add SSID/PASSWORD *************" << endl;
 	
 	WiFi.mode(WIFI_STA);
+	//WiFi.setHostname("YOUR_NEW_HOSTNAME");
 	WiFi.begin(WIFI_SSID, WIFI_PWD);
   	while (WiFi.status() != WL_CONNECTED) { Serial << '.'; delay(500); }
 
@@ -25,6 +29,46 @@ void NetworkManager::initWifi(){
 	_macAddress = WiFi.macAddress();
 
 	if (_macAddress == String(BROKER_MAC)) this->isMaster = true;
+}
+
+#define ETH_ADDR        1
+#define ETH_POWER_PIN   5
+#define ETH_MDC_PIN     23
+#define ETH_MDIO_PIN    18
+#define ETH_TYPE        ETH_PHY_IP101
+
+void NetworkManager::initETH(){
+	Serial << "--- Connecting via ETH ";
+
+	ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE);
+	int count = 2;
+	int *p_cnt = &count;
+	IPAddress ethIp(192, 168, 0, *p_cnt);
+	IPAddress gateway(192, 168, 1, 1);
+	IPAddress subnet(255, 255, 255, 0);
+	Serial << "trying IP " << ethIp.toString() << endl;
+  	while(!ETH.config(ethIp, gateway, subnet)){
+		count++;
+		Serial << "trying IP " << ethIp.toString() << endl;
+	}
+
+	Serial << "IP Address: " << ETH.localIP() << endl;
+  	Serial << "MAC Address: " << ETH.macAddress() << endl;
+	_ipAddress = ETH.localIP();
+	_macAddress = ETH.macAddress();
+
+	if (_macAddress == String(BROKER_MAC)) this->isMaster = true;
+}
+
+void NetworkManager::startWebServer(){
+	Serial << "--- Starting OTA WebServer --- " << endl;
+	_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    	request->send(200, "text/plain", "Hi! I am ESP32.");
+  	});
+
+	AsyncElegantOTA.begin(&_server);    // Start ElegantOTA
+	_server.begin();
+	Serial.println("HTTP server started");
 }
 
 void NetworkManager::startBroker(){

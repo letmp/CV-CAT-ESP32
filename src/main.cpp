@@ -1,14 +1,7 @@
 #include <Arduino.h>
-#include <TinyMqtt.h>   // https://github.com/hsaturn/TinyMqtt
-#include <ESPmDNS.h>
-
-#include <Credentials/Credentials.h>
-#include <Globals.h>
-
 #include <Network/NetworkManager.h>
 
 NetworkManager networkManager;
-
 
 void setup()
 {
@@ -16,6 +9,8 @@ void setup()
   delay(500);
   
   networkManager.initWifi();
+  //networkManager.initETH();
+  networkManager.startWebServer();
   if(networkManager.isMaster) networkManager.startBroker();
 
   networkManager.initMdns();

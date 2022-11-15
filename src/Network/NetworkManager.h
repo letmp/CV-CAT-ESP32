@@ -4,9 +4,12 @@
 #include <Arduino.h>
 #include <TinyMqtt.h>   // https://github.com/hsaturn/TinyMqtt
 #include <ESPmDNS.h>
+#include <ETH.h>
+#include <AsyncTCP.h>
+#include <ESPAsyncWebServer.h>
 
 #include <Credentials/Credentials.h>
-#include <Globals.h>
+#include <Common/Globals.h>
 
 class NetworkManager {
 	
@@ -14,6 +17,8 @@ class NetworkManager {
 		IPAddress _ipAddress;
 		String _macAddress;
 		
+		AsyncWebServer _server;
+
 		MqttBroker _broker;
 		IPAddress _brokerIp;
 		uint16_t _brokerPort;
@@ -30,6 +35,10 @@ class NetworkManager {
 		NetworkManager();
 		
 		void initWifi();
+		void initETH();
+
+		void startWebServer();
+
 		void startBroker();
 		void initMdns();
 		void initClients();
