@@ -6,19 +6,28 @@ NetworkManager networkManager;
 void setup()
 {
   Serial.begin(115200);
-  delay(500);
+  delay(5000);
   
-  networkManager.initWifi();
-  //networkManager.initETH();
-  networkManager.startWebServer();
-  if(networkManager.isMaster) networkManager.startBroker();
+  if( networkManager.loadWifiConfig() &&
+      networkManager.initWifiSTA())
+  {
+    
+    networkManager.startWebServerSTA();
 
-  networkManager.initMdns();
-  networkManager.initClients();
+  } else {
+
+    networkManager.startWebServerAP();
+    
+  }
+  
+  //networkManager.initETH();
+  //if(networkManager.isMaster) networkManager.startBroker();
+  //networkManager.initMdns();
+  //networkManager.initClients();
   
 }
 
 void loop()
 {
-  networkManager.loop();
+  //networkManager.loop();
 }

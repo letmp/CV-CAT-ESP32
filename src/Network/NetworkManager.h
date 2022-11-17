@@ -8,24 +8,43 @@
 #include <AsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-#include <Credentials/Credentials.h>
+#include <Persistence/PersistenceManager.h>
 #include <Common/Globals.h>
+
+#define ETH_ADDR        0 	// I²C-address of Ethernet PHY (0 or 1 for LAN8720, 31 for TLK110)
+#define ETH_POWER_PIN   -1 	// Pin# of the enable signal for the external crystal oscillator (-1 to disable for internal APLL source)
+#define ETH_MDC_PIN     23 	// Pin# of the I²C clock signal for the Ethernet PHY
+#define ETH_MDIO_PIN    18	// Pin# of the I²C IO signal for the Ethernet PHY
+#define ETH_TYPE        ETH_PHY_LAN8720
+#ifdef ETH_CLK_MODE 
+#undef ETH_CLK_MODE
+#endif
+#define ETH_CLK_MODE   	ETH_CLOCK_GPIO17_OUT // ETH_CLOCK_GPIO0_IN
 
 class NetworkManager {
 	
 	private:
-		IPAddress _ipAddress;
-		String _macAddress;
-		
-		AsyncWebServer _server;
+		static PersistenceManager mPersistenceManager;
 
-		MqttBroker _broker;
-		IPAddress _brokerIp;
-		uint16_t _brokerPort;
+		String mWifiSSID;
+		String mWifiPassword;
+		IPAddress mIpAddressWifi;
+		IPAddress mIpAddressWifiGateway;
+		IPAddress mIpAddressWifiSubnet;
+		IPAddress mIpAddressEth;
+		String mMacAddressWifi;
 		
-		MqttClient _clientState;
-		MqttClient _clientDataTransfer;
-		std::string _topicState="states/update";
+		AsyncWebServer mAsyncWebServer;
+		
+		static void writeParams(AsyncWebServerRequest * request);
+		static void writeParameterToSPIFFS(AsyncWebParameter* p, String parameter);
+
+		MqttBroker mBroker;
+		IPAddress mBrokerIp;
+		uint16_t mBrokerPort;
+		MqttClient mClientState;
+		MqttClient mClientDataTransfer;
+		std::string mTopicState="states/update";
 
 		static void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t );
 
@@ -34,11 +53,16 @@ class NetworkManager {
 		
 		NetworkManager();
 		
-		void initWifi();
+		bool loadWifiConfig();
+		bool loadEthConfig();
+
+		bool initWifiAP();
+		bool initWifiSTA();
 		void initETH();
 
-		void startWebServer();
-
+		void startWebServerAP();
+		void startWebServerSTA();
+		
 		void startBroker();
 		void initMdns();
 		void initClients();

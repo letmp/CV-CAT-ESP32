@@ -1,50 +1,113 @@
 #include "NetworkManager.h"
-
 #include <AsyncElegantOTA.h> // has to be included here instead of header file -> https://community.platformio.org/t/main-cpp-o-bss-asyncelegantota-0x0-multiple-definition-of-asyncelegantota/26733/3
 
 NetworkManager::NetworkManager() :
-	 _broker(BROKER_PORT),
-	 _clientState(&_broker),
-	 _clientDataTransfer(&_broker),
-	 _server(80)
-	 {	
+	mIpAddressWifiSubnet(255, 255, 0, 0),
+	mBroker(BROKER_PORT),
+	mClientState(&mBroker),
+	mClientDataTransfer(&mBroker),
+	mAsyncWebServer(80)
+	{	
 }
 
-void NetworkManager::initWifi(){
-	Serial << "--- Connecting via WIFI ";
+void NetworkManager::writeParameterToSPIFFS(AsyncWebParameter* p, String parameter){
+	if (p->name() == parameter) {
+		mPersistenceManager.writeFileToSPIFFS(SPIFFS, "/" + parameter, p->value().c_str());
+	}
+}
 
-	if (strlen(WIFI_SSID)==0)
-		Serial << "****** MISSING SSID! RENAME Credentials-Default.h to Credentials.h and add SSID/PASSWORD *************" << endl;
+void NetworkManager::stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
+	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
+}
+
+bool NetworkManager::loadWifiConfig(){
+	Serial << "--- Loading WIFI Config---" << endl;
 	
+	String wifiSSID 	= mPersistenceManager.readFileFromSPIFFS(SPIFFS, "/" + mPersistenceManager.PARAM_WIFI_SSID);
+    String wifiPassword	= mPersistenceManager.readFileFromSPIFFS(SPIFFS, "/" + mPersistenceManager.PARAM_WIFI_PWD);
+	String wifiIP 		= mPersistenceManager.readFileFromSPIFFS(SPIFFS, "/" + mPersistenceManager.PARAM_WIFI_IP);
+	String wifiGateway 	= mPersistenceManager.readFileFromSPIFFS(SPIFFS, "/" + mPersistenceManager.PARAM_WIFI_GATEWAY);
+		
+	if( wifiSSID == "" || wifiIP == ""){
+		Serial.println("Undefined SSID or IP address.");
+		return false;
+	}
+	mWifiSSID = wifiSSID;
+	mWifiPassword = wifiPassword;
+	mIpAddressWifi.fromString(wifiIP.c_str());
+	mIpAddressWifiGateway.fromString(wifiGateway.c_str());	
+	return true;
+}
+
+bool NetworkManager::loadEthConfig(){
+	Serial << "--- Loading ETH Config---" << endl;
+
+	String ethIP = mPersistenceManager.readFileFromSPIFFS(SPIFFS, "" + mPersistenceManager.PARAM_ETH_IP);
+
+	if(ethIP == ""){
+		Serial.println("Undefined IP address.");
+		return false;
+	}
+	mIpAddressEth.fromString(ethIP.c_str());
+	return true;
+}
+
+bool NetworkManager::initWifiAP(){
+	Serial << "--- Initializing WIFI as Access Point ---" << endl;
+	// NULL sets an open Access Point
+    WiFi.softAP("ESP-WIFI-MANAGER", NULL);
+
+    IPAddress IP = WiFi.softAPIP();
+    Serial.print("AP IP address: ");
+    Serial.println(IP); 
+	return true;
+}
+
+bool NetworkManager::initWifiSTA(){
+	Serial << "--- Initializing WIFI as Station ---" << endl;
+
 	WiFi.mode(WIFI_STA);
 	//WiFi.setHostname("YOUR_NEW_HOSTNAME");
-	WiFi.begin(WIFI_SSID, WIFI_PWD);
-  	while (WiFi.status() != WL_CONNECTED) { Serial << '.'; delay(500); }
 
-  	Serial << " ---" << endl << "Connected to " << WIFI_SSID << endl;
-	Serial << "IP Address: " << WiFi.localIP() << endl;
-  	Serial << "MAC Address: " << WiFi.macAddress() << endl;
+	if (!WiFi.config(mIpAddressWifi, mIpAddressWifiGateway, mIpAddressWifiSubnet)){
+    	Serial.println("STA Failed to configure");
+    	return false;
+  	}
 
-	_ipAddress = WiFi.localIP();
-	_macAddress = WiFi.macAddress();
+	WiFi.begin(mWifiSSID.c_str(), mWifiPassword.c_str());
+	Serial << "Connecting";
+	
+	unsigned long previousMillis = 0;
+	const long interval = 10000;  // interval to wait for Wi-Fi connection (milliseconds)
+	unsigned long currentMillis = millis();
+  	previousMillis = currentMillis;
+  	while (WiFi.status() != WL_CONNECTED) {
+		currentMillis = millis();
+		if (currentMillis - previousMillis >= interval) {
+			Serial.println("Failed to connect.");
+			return false;
+		}
+		 Serial << '.'; 
+		 delay(500); 
+	}
 
-	if (_macAddress == String(BROKER_MAC)) this->isMaster = true;
+  	Serial << endl << "Connected to " << mWifiSSID;
+	Serial << " with IP Address [" << WiFi.localIP();
+  	Serial << "] / MAC Address [" << WiFi.macAddress() << "]" << endl;
+
+	if (mMacAddressWifi == String(BROKER_MAC)) this->isMaster = true;
+
+	return true;
 }
 
-#define ETH_ADDR        1
-#define ETH_POWER_PIN   5
-#define ETH_MDC_PIN     23
-#define ETH_MDIO_PIN    18
-#define ETH_TYPE        ETH_PHY_IP101
-
 void NetworkManager::initETH(){
-	Serial << "--- Connecting via ETH ";
+	Serial << "--- Connecting via ETH " << endl;
 
-	ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE);
+	ETH.begin(ETH_ADDR, ETH_POWER_PIN, ETH_MDC_PIN, ETH_MDIO_PIN, ETH_TYPE, ETH_CLK_MODE);
 	int count = 2;
 	int *p_cnt = &count;
 	IPAddress ethIp(192, 168, 0, *p_cnt);
-	IPAddress gateway(192, 168, 1, 1);
+	IPAddress gateway(192, 168, 0, 1);
 	IPAddress subnet(255, 255, 255, 0);
 	Serial << "trying IP " << ethIp.toString() << endl;
   	while(!ETH.config(ethIp, gateway, subnet)){
@@ -52,28 +115,58 @@ void NetworkManager::initETH(){
 		Serial << "trying IP " << ethIp.toString() << endl;
 	}
 
+	while(!((uint32_t)ETH.localIP())) //wait for IP
+  	{
+
+  	}
 	Serial << "IP Address: " << ETH.localIP() << endl;
   	Serial << "MAC Address: " << ETH.macAddress() << endl;
-	_ipAddress = ETH.localIP();
-	_macAddress = ETH.macAddress();
-
-	if (_macAddress == String(BROKER_MAC)) this->isMaster = true;
 }
 
-void NetworkManager::startWebServer(){
-	Serial << "--- Starting OTA WebServer --- " << endl;
-	_server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+void NetworkManager::startWebServerAP(){
+	Serial << "--- Starting WebServer in Access Point Mode--- " << endl;
+
+	// Web Server Root URL
+    mAsyncWebServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+      request->send(SPIFFS, "/wifimanager.html", "text/html");
+    });
+    
+    mAsyncWebServer.serveStatic("/", SPIFFS, "/");
+    mAsyncWebServer.on("/", HTTP_POST, [](AsyncWebServerRequest *request ) {
+		
+      int params = request->params();
+      for(int i=0;i<params;i++){
+        AsyncWebParameter* p = request->getParam(i);
+        if(p->isPost()){
+			writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_SSID);
+			writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_PWD);
+			writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_IP);
+			writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_GATEWAY);
+        }
+      }
+      request->send(200, "text/plain", "Updated WIFI Settings. ESP will restart now and connect to your WIFI.");
+      delay(3000);
+      ESP.restart();
+    });
+    mAsyncWebServer.begin();
+}
+
+void NetworkManager::startWebServerSTA(){
+	Serial << "--- Starting WebServer in Station Mode--- " << endl;
+
+	mAsyncWebServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     	request->send(200, "text/plain", "Hi! I am ESP32.");
   	});
 
-	AsyncElegantOTA.begin(&_server);    // Start ElegantOTA
-	_server.begin();
+	AsyncElegantOTA.begin(&mAsyncWebServer); // Start ElegantOTA
+
+	mAsyncWebServer.begin();
 	Serial.println("HTTP server started");
 }
 
 void NetworkManager::startBroker(){
 	Serial << "--- Starting local broker --- " << endl;
-	_broker.begin();	
+	mBroker.begin();	
 }
 
 void NetworkManager::initMdns(){
@@ -96,11 +189,11 @@ void NetworkManager::initMdns(){
 		int nrOfServices = MDNS.queryService("mqtt", "tcp");
 		if (nrOfServices == 0) Serial.println("No services were found.");
 		else {
-			_brokerIp = MDNS.IP(0);
-			_brokerPort = MDNS.port(0);
+			mBrokerIp = MDNS.IP(0);
+			mBrokerPort = MDNS.port(0);
 			Serial << endl <<  "Found broker service" << endl;
-			Serial << "IP Address: " << _brokerIp << endl;
-			Serial << "Port: " << _brokerPort << endl;
+			Serial << "IP Address: " << mBrokerIp << endl;
+			Serial << "Port: " << mBrokerPort << endl;
 		}
 	}
 }
@@ -111,35 +204,31 @@ void NetworkManager::initClients(){
 		Serial << "Already connected to local broker" << endl;
 	}
 	else {
-		Serial << "Connecting to broker with IP " << _brokerIp << ":" << _brokerPort << endl;
-		_clientState.connect(_brokerIp.toString().c_str(), _brokerPort);
-		_clientDataTransfer.connect(_brokerIp.toString().c_str(), _brokerPort);
+		Serial << "Connecting to broker with IP " << mBrokerIp << ":" << mBrokerPort << endl;
+		mClientState.connect(mBrokerIp.toString().c_str(), mBrokerPort);
+		mClientDataTransfer.connect(mBrokerIp.toString().c_str(), mBrokerPort);
 	}
 
-	_clientState.setCallback(NetworkManager::stateUpdate);
-	_clientState.subscribe(_topicState);
+	mClientState.setCallback(NetworkManager::stateUpdate);
+	mClientState.subscribe(mTopicState);
 
-}
-
-void NetworkManager::stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
-	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
 }
 
 void NetworkManager::loop(){
 	
-	if(isMaster) _broker.loop();
+	if(isMaster) mBroker.loop();
 
-	_clientState.loop();
-	_clientDataTransfer.loop();
+	mClientState.loop();
+	mClientDataTransfer.loop();
 
 	static const int interval = 3000;  // publishes every second
     static uint32_t timer = millis() + interval;
 
     if (millis() > timer)
     {
-      Serial << "publishing " << _topicState.c_str() << " from IP " << _ipAddress.toString() << endl;
+      Serial << "publishing " << mTopicState.c_str() << " from IP " << mIpAddressWifi.toString() << endl;
       timer += interval;
-      _clientState.publish(_topicState, "update " + _ipAddress.toString());
+      mClientState.publish(mTopicState, "update " + mIpAddressWifi.toString());
     }
   
 }
