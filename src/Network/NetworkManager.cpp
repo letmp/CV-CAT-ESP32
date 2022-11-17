@@ -44,12 +44,17 @@ bool NetworkManager::loadEthConfig(){
 
 bool NetworkManager::initWifiAP(){
 	Serial << "--- Initializing WIFI as Access Point ---" << endl;
-	// NULL sets an open Access Point
-    WiFi.softAP("ESP-WIFI-MANAGER", NULL);
+	char APssid[25];
+	uint64_t macAddress = ESP.getEfuseMac();
+ 	uint64_t macAddressTrunc = macAddress << 40;
+ 	uint64_t chipID = macAddressTrunc >> 40;
+  	snprintf(APssid,25, "ESP-WIFI-MANAGER-%08X",chipID);
+    WiFi.softAP(APssid, NULL);
 
     IPAddress IP = WiFi.softAPIP();
-    Serial.print("AP IP address: ");
-    Serial.println(IP); 
+	Serial << "AP SSID: " << APssid << endl;
+	Serial << "AP IP address: " << IP << endl;
+	
 	return true;
 }
 
@@ -126,13 +131,26 @@ String NetworkManager::processConfigTemplate(const String& var)
 	return String();
 }
 
+String test(const String& var)
+{
+	if(var == "WIFI_SSID")
+    	return F("mWifiSSID");
+	if(var == "WIFI_IP")
+		return F("mIpAddressWifi.toString().c_str()");
+	if(var == "WIFI_GATEWAY")
+		return F("mIpAddressWifiGateway.toString().c_str()");
+	if(var == "ETH_IP")
+		return F("mIpAddressEth.toString().c_str()");
+	return String();
+}
+
 void NetworkManager::handleConfigGetAP(AsyncWebServerRequest *request){
 	request->send(SPIFFS, "/config_AP.html", "text/html");
 }
 
 void NetworkManager::handleConfigGetSTA(AsyncWebServerRequest *request){
-	//request->send(SPIFFS, "/config_STA.html", String(), false, processConfigTemplate);
-	request->send(SPIFFS, "/config_STA.html", "text/html");
+	request->send(SPIFFS, "/config_STA.html", String(), false, test);
+	//request->send(SPIFFS, "/config_STA.html", "text/html");
 }
 
 void NetworkManager::writeParameterToSPIFFS(AsyncWebParameter* p, String parameter){
@@ -161,21 +179,21 @@ void NetworkManager::handleConfigPost(AsyncWebServerRequest *request){
       ESP.restart();
 }
 
-void NetworkManager::startWebServer(bool modeSTA){
+void NetworkManager::startWebServer(bool APmode){
 	Serial << "--- Starting WebServer ";
 
-	if(modeSTA){
-		Serial << " in Station mode ---" << endl;
+	if(APmode){
+		Serial << "in AP mode ---" << endl;
+		mAsyncWebServer.on("/", HTTP_GET, std::bind(&NetworkManager::handleConfigGetAP, this, std::placeholders::_1));
+    	mAsyncWebServer.serveStatic("/", SPIFFS, "/");
+    	mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetworkManager::handleConfigPost, this, std::placeholders::_1));
+	}
+	else {
+		Serial << "in Station mode ---" << endl;
 		mAsyncWebServer.on("/", HTTP_GET, std::bind(&NetworkManager::handleConfigGetSTA, this, std::placeholders::_1));
     	mAsyncWebServer.serveStatic("/", SPIFFS, "/");
 		mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetworkManager::handleConfigPost, this, std::placeholders::_1));
 		AsyncElegantOTA.begin(&mAsyncWebServer); // Start ElegantOTA
-	}
-	else {
-		Serial << " in AP mode ---" << endl;
-		mAsyncWebServer.on("/", HTTP_GET, std::bind(&NetworkManager::handleConfigGetAP, this, std::placeholders::_1));
-    	mAsyncWebServer.serveStatic("/", SPIFFS, "/");
-    	mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetworkManager::handleConfigPost, this, std::placeholders::_1));
 	}
 	    
     mAsyncWebServer.begin();
