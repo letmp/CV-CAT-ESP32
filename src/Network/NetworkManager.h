@@ -35,9 +35,12 @@ class NetworkManager {
 		String mMacAddressWifi;
 		
 		AsyncWebServer mAsyncWebServer;
+		
+		String processConfigTemplate(const String& var);
+		void handleConfigGetAP(AsyncWebServerRequest *request);
+		void handleConfigGetSTA(AsyncWebServerRequest *request);
 		void writeParameterToSPIFFS(AsyncWebParameter* p, String parameter);
-		void writeWifiParametersToSPIFFS(AsyncWebServerRequest *request);
-		void writeEthParametersToSPIFFS(AsyncWebServerRequest *request);
+		void handleConfigPost(AsyncWebServerRequest *request);
 
 		MqttBroker mBroker;
 		IPAddress mBrokerIp;
@@ -58,10 +61,10 @@ class NetworkManager {
 
 		bool initWifiAP();
 		bool initWifiSTA();
+
 		void initETH();
 
-		void startWebServerAP();
-		void startWebServerSTA();
+		void startWebServer(bool APmode);
 		
 		void startBroker();
 		void initMdns();

@@ -8,16 +8,13 @@ void setup()
   Serial.begin(115200);
   delay(5000);
   
-  if( networkManager.loadWifiConfig() &&
-      networkManager.initWifiSTA())
-  {
-    
-    networkManager.startWebServerSTA();
-
-  } else {
-
-    networkManager.startWebServerAP();
-    
+  if( networkManager.loadWifiConfig() && // try to load config
+      networkManager.initWifiSTA()) // try to init wifi in station mode
+  { 
+    networkManager.startWebServer(false);
+  } else if ( networkManager.initWifiAP()) // try to init wifi in access point mode
+  { 
+    networkManager.startWebServer(true); 
   }
   
   //networkManager.initETH();

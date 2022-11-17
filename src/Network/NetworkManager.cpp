@@ -10,45 +10,6 @@ NetworkManager::NetworkManager() :
 	{	
 }
 
-void NetworkManager::writeParameterToSPIFFS(AsyncWebParameter* p, String parameter){
-	if (p->name() == parameter) {
-		mPersistenceManager.writeFileToSPIFFS(SPIFFS, "/" + parameter, p->value().c_str());
-	}
-}
-
-void NetworkManager::writeWifiParametersToSPIFFS(AsyncWebServerRequest *request){
-	int params = request->params();
-		for(int i=0;i<params;i++){
-			AsyncWebParameter* p = request->getParam(i);
-			if(p->isPost()){
-				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_SSID);
-				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_PWD);
-				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_IP);
-				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_GATEWAY);
-			}
-		}
-      request->send(200, "text/plain", "Updated WIFI Settings. ESP will restart now with updated settings");
-      delay(3000);
-      ESP.restart();
-}
-
-void NetworkManager::writeEthParametersToSPIFFS(AsyncWebServerRequest *request){
-	int params = request->params();
-		for(int i=0;i<params;i++){
-			AsyncWebParameter* p = request->getParam(i);
-			if(p->isPost()){
-				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_ETH_IP);
-			}
-		}
-      request->send(200, "text/plain", "Updated ETH Settings. ESP will restart now with updated settings.");
-      delay(3000);
-      ESP.restart();
-}
-
-void NetworkManager::stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
-	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
-}
-
 bool NetworkManager::loadWifiConfig(){
 	Serial << "--- Loading WIFI Config---" << endl;
 	
@@ -152,29 +113,73 @@ void NetworkManager::initETH(){
   	Serial << "MAC Address: " << ETH.macAddress() << endl;
 }
 
-void NetworkManager::startWebServerAP(){
-	Serial << "--- Starting WebServer in Access Point Mode--- " << endl;
-
-    mAsyncWebServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-      request->send(SPIFFS, "/wifimanager.html", "text/html");
-    });
-    mAsyncWebServer.serveStatic("/", SPIFFS, "/");
-    mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetworkManager::writeWifiParametersToSPIFFS, this, std::placeholders::_1));
-    mAsyncWebServer.begin();
+String NetworkManager::processConfigTemplate(const String& var)
+{
+	if(var == "WIFI_SSID")
+    	return F(mWifiSSID.c_str());
+	if(var == "WIFI_IP")
+		return F(mIpAddressWifi.toString().c_str());
+	if(var == "WIFI_GATEWAY")
+		return F(mIpAddressWifiGateway.toString().c_str());
+	if(var == "ETH_IP")
+		return F(mIpAddressEth.toString().c_str());
+	return String();
 }
 
-void NetworkManager::startWebServerSTA(){
-	Serial << "--- Starting WebServer in Station Mode--- " << endl;
+void NetworkManager::handleConfigGetAP(AsyncWebServerRequest *request){
+	request->send(SPIFFS, "/config_AP.html", "text/html");
+}
 
-	mAsyncWebServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-      request->send(SPIFFS, "/index.html", "text/html");
-    });
-    mAsyncWebServer.serveStatic("/", SPIFFS, "/");
+void NetworkManager::handleConfigGetSTA(AsyncWebServerRequest *request){
+	//request->send(SPIFFS, "/config_STA.html", String(), false, processConfigTemplate);
+	request->send(SPIFFS, "/config_STA.html", "text/html");
+}
 
-	AsyncElegantOTA.begin(&mAsyncWebServer); // Start ElegantOTA
+void NetworkManager::writeParameterToSPIFFS(AsyncWebParameter* p, String parameter){
+	if (p->name() == parameter) {
+		mPersistenceManager.writeFileToSPIFFS(SPIFFS, "/" + parameter, p->value().c_str());
+	}
+}
 
-	mAsyncWebServer.begin();
-	Serial.println("HTTP server started");
+void NetworkManager::handleConfigPost(AsyncWebServerRequest *request){
+	String newWifiIp = "";
+
+	int params = request->params();
+		for(int i=0;i<params;i++){
+			AsyncWebParameter* p = request->getParam(i);
+			if(p->isPost() && p->value() != ""){
+				if (p->name() == mPersistenceManager.PARAM_WIFI_IP) newWifiIp = p->value();
+				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_SSID);
+				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_PWD);
+				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_IP);
+				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_WIFI_GATEWAY);
+				writeParameterToSPIFFS(p, mPersistenceManager.PARAM_ETH_IP);
+			}
+		}
+      request->send(200, "text/plain", "Updated ESP settings. Rebooting now. You can access the config through your local wifi with ip " + newWifiIp);
+      delay(3000);
+      ESP.restart();
+}
+
+void NetworkManager::startWebServer(bool modeSTA){
+	Serial << "--- Starting WebServer ";
+
+	if(modeSTA){
+		Serial << " in Station mode ---" << endl;
+		mAsyncWebServer.on("/", HTTP_GET, std::bind(&NetworkManager::handleConfigGetSTA, this, std::placeholders::_1));
+    	mAsyncWebServer.serveStatic("/", SPIFFS, "/");
+		mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetworkManager::handleConfigPost, this, std::placeholders::_1));
+		AsyncElegantOTA.begin(&mAsyncWebServer); // Start ElegantOTA
+	}
+	else {
+		Serial << " in AP mode ---" << endl;
+		mAsyncWebServer.on("/", HTTP_GET, std::bind(&NetworkManager::handleConfigGetAP, this, std::placeholders::_1));
+    	mAsyncWebServer.serveStatic("/", SPIFFS, "/");
+    	mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetworkManager::handleConfigPost, this, std::placeholders::_1));
+	}
+	    
+    mAsyncWebServer.begin();
+	Serial.println("Server started");
 }
 
 void NetworkManager::startBroker(){
@@ -209,6 +214,10 @@ void NetworkManager::initMdns(){
 			Serial << "Port: " << mBrokerPort << endl;
 		}
 	}
+}
+
+void NetworkManager::stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t ){ 
+	Serial << "--> stateUpdate received " << topic.c_str() << ", " << payload << endl; 
 }
 
 void NetworkManager::initClients(){
