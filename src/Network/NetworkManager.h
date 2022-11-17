@@ -24,7 +24,7 @@
 class NetworkManager {
 	
 	private:
-		static PersistenceManager mPersistenceManager;
+		PersistenceManager mPersistenceManager;
 
 		String mWifiSSID;
 		String mWifiPassword;
@@ -35,9 +35,9 @@ class NetworkManager {
 		String mMacAddressWifi;
 		
 		AsyncWebServer mAsyncWebServer;
-		
-		static void writeParams(AsyncWebServerRequest * request);
-		static void writeParameterToSPIFFS(AsyncWebParameter* p, String parameter);
+		void writeParameterToSPIFFS(AsyncWebParameter* p, String parameter);
+		void writeWifiParametersToSPIFFS(AsyncWebServerRequest *request);
+		void writeEthParametersToSPIFFS(AsyncWebServerRequest *request);
 
 		MqttBroker mBroker;
 		IPAddress mBrokerIp;
