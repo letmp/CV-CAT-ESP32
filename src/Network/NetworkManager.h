@@ -9,7 +9,11 @@
 #include <ESPAsyncWebServer.h>
 
 #include <Persistence/PersistenceManager.h>
-#include <Common/Globals.h>
+#include <Common/Common.h>
+
+#define TIMEOUT_NETWORK 10000
+#define HTTP_PORT 80
+#define MQTT_PORT 1883
 
 #define ETH_ADDR        0 	// I²C-address of Ethernet PHY (0 or 1 for LAN8720, 31 for TLK110)
 #define ETH_POWER_PIN   -1 	// Pin# of the enable signal for the external crystal oscillator (-1 to disable for internal APLL source)
@@ -24,23 +28,46 @@
 class NetworkManager {
 	
 	private:
+
 		PersistenceManager mPersistenceManager;
+
+		String mUniqueHostname;
 
 		String mWifiSSID;
 		String mWifiPassword;
+		
+		IPAddress mIpAddressSubnet;
+
+		bool mHasCustomWifiAddress;
 		IPAddress mIpAddressWifi;
 		IPAddress mIpAddressWifiGateway;
-		IPAddress mIpAddressWifiSubnet;
+
+		bool mHasCustomEthAddress;
 		IPAddress mIpAddressEth;
-		String mMacAddressWifi;
+		IPAddress mIpAddressEthGateway;
+		
+		String PARAM_WIFI_SSID 		= "wifiSSID";
+		String PARAM_WIFI_PWD 		= "wifiPwd";
+		String PARAM_WIFI_IP 		= "wifiIP";
+		String PARAM_WIFI_GATEWAY 	= "wifiGateway";
+		String PARAM_ETH_IP 		= "ethIP";
+		String PARAM_ETH_GATEWAY	= "ethGateway";
+
+		void setUniqueHostname();
+		bool loadWifiConfig();
+		bool loadEthConfig();
+		bool initWifiAP();
+		bool initWifiSTA();
+		bool initETH();
+
+		void initMdns();
 		
 		AsyncWebServer mAsyncWebServer;
-		
-		String processConfigTemplate(const String& var);
-		void handleConfigGetAP(AsyncWebServerRequest *request);
-		void handleConfigGetSTA(AsyncWebServerRequest *request);
+		void startWebServer(bool hasWifiConfig);
+		void handleGetNetconfig(AsyncWebServerRequest *request);
+		String processTemplateNetconfig(const String& var);
+		void handlePostNetconfig(AsyncWebServerRequest *request);
 		void writeParameterToSPIFFS(AsyncWebParameter* p, String parameter);
-		void handleConfigPost(AsyncWebServerRequest *request);
 
 		MqttBroker mBroker;
 		IPAddress mBrokerIp;
@@ -52,24 +79,13 @@ class NetworkManager {
 		static void stateUpdate(const MqttClient*, const Topic& topic, const char* payload, size_t );
 
 	public:
-		bool isMaster = false;
 		
 		NetworkManager();
-		
-		bool loadWifiConfig();
-		bool loadEthConfig();
-
-		bool initWifiAP();
-		bool initWifiSTA();
-
-		void initETH();
-
-		void startWebServer(bool APmode);
-		
+		void begin();
+				
 		void startBroker();
-		void initMdns();
 		void initClients();
-		
+		IPAddress findStatusBroker();
 		void loop();
 };
 

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ESP32 Network Configuration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+  <article class="main-content">
+
+    <header>
+      <h1>ESP32 Network Configuration</h1>
+      <small>
+        <p>
+            Set the WIFI Credentials to connect to your local WIFI. You should set at least a SSID.<br/>
+            If you leave the IP inputs blank, your router shoud have a DHCP server running, so it can assign dynamic IPs.
+        </p>
+    </small>
+
+    </header>
+
+    <div class="form-group">
+      <label for="wifiSSID">Wifi SSID</label>
+      <input class="input-control" type="text" id ="wifiSSID" name="wifiSSID" value="%wifiSSID%">
+      
+      <label for="wifiPwd">Wifi Password</label>
+      <input class="input-control"type="password" id ="wifiPwd" name="wifiPwd" value="%wifiPwd%">
+    </div>
+
+    <div class="form-group">
+      <label for="wifiIP">Wifi IP Address</label>
+      <input class="input-control" type="text" id ="wifiIP" name="wifiIP" value="%wifiIP%">
+
+      <label for="wifiGateway">Wifi Gateway Address</label>
+      <input class="input-control" type="text" id ="wifiGateway" name="wifiGateway" value="%wifiGateway%">
+    </div>
+    <div class="form-group">
+      <label for="ethIP">ETH IP Address</label>
+      <input class="input-control" type="text" id ="ethIP" name="ethIP" value="%ethIP%">
+    
+      <label for="ethGateway">ETH Gateway Address</label>
+      <input class="input-control" type="text" id ="ethGateway" name="ethGateway" value="%ethGateway%">
+    </div>
+
+    <div class="form-group">
+      <label>&nbsp;</label>
+      <button type ="submit">Submit</button>
+    </div>
+
+  </article>
+</body>
+</html>

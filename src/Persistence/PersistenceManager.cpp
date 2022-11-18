@@ -16,7 +16,7 @@ String PersistenceManager::readFileFromSPIFFS(fs::FS &fs, String path){
 
   File file = fs.open(path.c_str());
   if(!file || file.isDirectory()){
-    Serial.println("- failed to open file for reading");
+    Serial.println("- file not found.");
     return String();
   }
   
@@ -37,9 +37,7 @@ void PersistenceManager::writeFileToSPIFFS(fs::FS &fs, String path, const char *
     Serial.println("- failed to open file for writing");
     return;
   }
-  if(file.print(message)){
-    Serial.println("- file written");
-  } else {
-    Serial.println("- frite failed");
+  if(!file.print(message)){
+    Serial.println("- write failed");
   }
 }
