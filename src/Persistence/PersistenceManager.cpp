@@ -1,43 +1,65 @@
 #include "PersistenceManager.h"
 
-PersistenceManager::PersistenceManager() {	
-    initSPIFFS();
+PersistenceManager::PersistenceManager()
+{
+  initSPIFFS();
 }
 
-void PersistenceManager::initSPIFFS() {
-  Serial.println("--- Mounting SPIFFS---");
-  if (!SPIFFS.begin(true)) {
-    Serial.println("An error has occurred while mounting SPIFFS");
+void PersistenceManager::initSPIFFS()
+{
+  Serial << "--- Mounting SPIFFS---" << endl;
+  if (!SPIFFS.begin(true))
+  {
+    Serial << "An error has occurred while mounting SPIFFS" << endl;
   }
 }
 
-String PersistenceManager::readFileFromSPIFFS(fs::FS &fs, String path){
-  Serial.printf("Reading file: %s\r\n", path.c_str());
+String PersistenceManager::readFileFromSPIFFS(fs::FS &fs, String path)
+{
+  Serial << "Try to read file [" << path.c_str() << "] ";
 
   File file = fs.open(path.c_str());
-  if(!file || file.isDirectory()){
-    Serial.println("- file not found.");
+  if (!file || file.isDirectory())
+  {
+    Serial << "- Not found" << endl;
     return String();
   }
-  
+
   String fileContent;
-  while(file.available()){
+  while (file.available())
+  {
     fileContent = file.readStringUntil('\n');
-    break;     
+    break;
   }
+  Serial << endl;
   return fileContent;
 }
 
-void PersistenceManager::writeFileToSPIFFS(fs::FS &fs, String path, const char * message){
-  Serial.printf("Writing file: %s\r\n", path.c_str());
-  Serial.printf("Content: %s\r\n", message);
-
+void PersistenceManager::writeFileToSPIFFS(fs::FS &fs, String path, const char *message)
+{
+  Serial << "Writing file [" << path.c_str() << "] with content [" << message << "]";
   File file = fs.open(path.c_str(), FILE_WRITE);
-  if(!file){
-    Serial.println("- failed to open file for writing");
+  if (!file)
+  {
+    Serial << "- ERROR: Failed to open" << endl;
+    ;
     return;
   }
-  if(!file.print(message)){
-    Serial.println("- write failed");
+  if (!file.print(message))
+  {
+    Serial << "- ERROR: Failed to write";
+  }
+  Serial << endl;
+}
+
+void PersistenceManager::removeFiles()
+{
+  Serial << "Removing all files from SPIFFS" << endl;
+  File root = SPIFFS.open("/");
+  File file = root.openNextFile();
+  while (file)
+  {
+    SPIFFS.remove(file.name());
+    file = root.openNextFile();
   }
 }

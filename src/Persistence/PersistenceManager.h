@@ -3,19 +3,19 @@
 
 #include <Arduino.h>
 #include "SPIFFS.h"
+#include <Streaming.h>
 
-class PersistenceManager {
-	
-	private:
-		
-		void initSPIFFS();
-		
-	public:
+class PersistenceManager
+{
+private:
+	void initSPIFFS();
 
-		PersistenceManager();
+public:
+	PersistenceManager();
 
-		String readFileFromSPIFFS(fs::FS &fs, String path);
-        void writeFileToSPIFFS(fs::FS &fs, String path, const char * message);
+	String readFileFromSPIFFS(fs::FS &fs, String path);
+	void writeFileToSPIFFS(fs::FS &fs, String path, const char *message);
+	void removeFiles();
 };
 
 #endif

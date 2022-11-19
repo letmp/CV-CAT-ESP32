@@ -11,42 +11,46 @@
 
     <header>
       <h1>ESP32 Network Configuration</h1>
-      <small>
-        <p>
-            Set the WIFI Credentials to connect to your local WIFI. You should set at least a SSID.<br/>
-            If you leave the IP inputs blank, your router shoud have a DHCP server running, so it can assign dynamic IPs.
-        </p>
-    </small>
-
-    </header>
-
-    <div class="form-group">
-      <label for="wifiSSID">Wifi SSID</label>
-      <input class="input-control" type="text" id ="wifiSSID" name="wifiSSID" value="%wifiSSID%">
       
-      <label for="wifiPwd">Wifi Password</label>
-      <input class="input-control"type="password" id ="wifiPwd" name="wifiPwd" value="%wifiPwd%">
-    </div>
-
-    <div class="form-group">
-      <label for="wifiIP">Wifi IP Address</label>
-      <input class="input-control" type="text" id ="wifiIP" name="wifiIP" value="%wifiIP%">
-
-      <label for="wifiGateway">Wifi Gateway Address</label>
-      <input class="input-control" type="text" id ="wifiGateway" name="wifiGateway" value="%wifiGateway%">
-    </div>
-    <div class="form-group">
-      <label for="ethIP">ETH IP Address</label>
-      <input class="input-control" type="text" id ="ethIP" name="ethIP" value="%ethIP%">
+        <p>
+            <b>Please submit the SSID (and password) of your local WIFI.</b><br/>
+            You can also set static IPs for Wifi and Ethernet or leave it blank so that dynamic IPs are assigned by DHCP.
+        </p>
+        <p>
+          %netConfig%
+        </p>
+      
+    </header>
     
-      <label for="ethGateway">ETH Gateway Address</label>
-      <input class="input-control" type="text" id ="ethGateway" name="ethGateway" value="%ethGateway%">
-    </div>
-
-    <div class="form-group">
-      <label>&nbsp;</label>
-      <button type ="submit">Submit</button>
-    </div>
+    <form action="/" method="POST">
+      <div class="form-group">
+        <label for="wifiSSID">Wifi SSID</label>
+        <input class="input-control" type="text" id ="wifiSSID" name="wifiSSID" value="%wifiSSID%">
+        
+        <label for="wifiPwd">Wifi Password</label>
+        <input class="input-control"type="password" id ="wifiPwd" name="wifiPwd" value="%wifiPwd%">
+      </div>
+  
+      <div class="form-group">
+        <label for="staticWifiIP">Static Wifi IP</label>
+        <input class="input-control" type="text" id ="staticWifiIP" name="staticWifiIP" value="%staticWifiIP%">
+  
+        <label for="staticWifiGateway">Static Wifi Gateway</label>
+        <input class="input-control" type="text" id ="wifiGateway" name="staticWifiGateway" value="%staticWifiGateway%">
+      </div>
+      <div class="form-group">
+        <label for="staticEthIP">Static ETH IP</label>
+        <input class="input-control" type="text" id ="staticEthIP" name="staticEthIP" value="%staticEthIP%">
+      
+        <label for="staticEthGateway">Static ETH Gateway</label>
+        <input class="input-control" type="text" id ="staticEthGateway" name="staticEthGateway" value="%staticEthGateway%">
+      </div>
+  
+      <div class="form-group">
+        <label>&nbsp;</label>
+        <button type ="submit">Submit</button>
+      </div>
+    </form>
 
   </article>
 </body>
