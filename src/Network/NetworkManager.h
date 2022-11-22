@@ -67,10 +67,15 @@ private:
 
 	AsyncWebServer mAsyncWebServer;
 	void startWebServer(bool hasWifiConfig);
+	
 	void handleGetNetconfig(AsyncWebServerRequest *request);
-	void handlePostNetconfig(AsyncWebServerRequest *request);
 	String processTemplateNetconfig(const String &var);
+	
+	void handlePostNetconfig(AsyncWebServerRequest *request);
 	void writeParameterToSPIFFS(AsyncWebParameter *p, String parameter);
+	
+	void handleGetIO(AsyncWebServerRequest *request);
+	void handleGetIOSwitch(AsyncWebServerRequest *request);
 
 	MqttBroker mBroker;
 	IPAddress mBrokerIp;

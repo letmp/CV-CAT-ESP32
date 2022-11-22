@@ -1,7 +1,9 @@
 #include <Arduino.h>
 #include <Network/NetworkManager.h>
+#include <IO/IOManager.h>
 
 NetworkManager networkManager;
+IOManager ioManager;
 
 void setup()
 {
@@ -9,8 +11,10 @@ void setup()
   delay(5000);
 
   networkManager.begin();
+  
+  ioManager.begin();
 
-  // networkManager.initETH();
+
   // if(networkManager.isMaster) networkManager.startBroker();
   // networkManager.initMdns();
   // networkManager.initClients();
@@ -18,5 +22,6 @@ void setup()
 
 void loop()
 {
+  ioManager.loop();
   // networkManager.loop();
 }

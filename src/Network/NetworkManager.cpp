@@ -164,12 +164,14 @@ bool NetworkManager::initETH()
 		currentMillis = millis();
 		if (currentMillis - previousMillis >= TIMEOUT_NETWORK)
 		{
-			Serial.println("Failed to connect.");
+			Serial << endl << "Failed to connect" << endl;
 			return false;
 		}
 		Serial << '.';
 		delay(500);
 	}
+	
+	Serial << endl;
 
 	if (!mHasStaticEthAddress)
 	{
@@ -204,6 +206,11 @@ void NetworkManager::startWebServer(bool hasWifiConfig)
 	mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetworkManager::handlePostNetconfig, this, std::placeholders::_1));
 	mAsyncWebServer.serveStatic("/", SPIFFS, "/");
 
+	mAsyncWebServer.on("/io/", HTTP_GET, std::bind(&NetworkManager::handleGetIO, this, std::placeholders::_1));
+	mAsyncWebServer.on("/io/switch", HTTP_GET, std::bind(&NetworkManager::handleGetIOSwitch, this, std::placeholders::_1));
+	mAsyncWebServer.serveStatic("/io/", SPIFFS, "/");
+	
+
 	if (hasWifiConfig)
 		AsyncElegantOTA.begin(&mAsyncWebServer);
 
@@ -212,30 +219,18 @@ void NetworkManager::startWebServer(bool hasWifiConfig)
 	Serial << "http:\\\\" << mUniqueHostname << ".local" << endl;
 }
 
+void NetworkManager::handleGetIO(AsyncWebServerRequest *request)
+{
+	request->send(SPIFFS, "/io.html", "text/html");
+}
+void NetworkManager::handleGetIOSwitch(AsyncWebServerRequest *request)
+{
+	request->send(SPIFFS, "/io.html", "text/html");
+}
+
 void NetworkManager::handleGetNetconfig(AsyncWebServerRequest *request)
 {
 	request->send(SPIFFS, "/netconfig.html", String(), false, [this](const String &var) -> String { return this->processTemplateNetconfig(var); });
-}
-
-void NetworkManager::handlePostNetconfig(AsyncWebServerRequest *request)
-{
-	int params = request->params();
-	for (int i = 0; i < params; i++)
-	{
-		AsyncWebParameter *p = request->getParam(i);
-		if (p->isPost())
-		{
-			writeParameterToSPIFFS(p, PARAM_WIFI_SSID);
-			writeParameterToSPIFFS(p, PARAM_WIFI_PWD);
-			writeParameterToSPIFFS(p, PARAM_STATIC_WIFI_IP);
-			writeParameterToSPIFFS(p, PARAM_STATIC_WIFI_GATEWAY);
-			writeParameterToSPIFFS(p, PARAM_STATIC_ETH_IP);
-			writeParameterToSPIFFS(p, PARAM_STATIC_ETH_GATEWAY);
-		}
-	}
-	request->send(200, "text/html", "Done. ESP will restart, connect to your router and go to <a href=\"http://" + mUniqueHostname + ".local\">" + mUniqueHostname + ".local</a>");
-	delay(3000);
-	ESP.restart();
 }
 
 String NetworkManager::processTemplateNetconfig(const String &var)
@@ -280,6 +275,27 @@ String NetworkManager::processTemplateNetconfig(const String &var)
 	}
 
 	return String();
+}
+
+void NetworkManager::handlePostNetconfig(AsyncWebServerRequest *request)
+{
+	int params = request->params();
+	for (int i = 0; i < params; i++)
+	{
+		AsyncWebParameter *p = request->getParam(i);
+		if (p->isPost())
+		{
+			writeParameterToSPIFFS(p, PARAM_WIFI_SSID);
+			writeParameterToSPIFFS(p, PARAM_WIFI_PWD);
+			writeParameterToSPIFFS(p, PARAM_STATIC_WIFI_IP);
+			writeParameterToSPIFFS(p, PARAM_STATIC_WIFI_GATEWAY);
+			writeParameterToSPIFFS(p, PARAM_STATIC_ETH_IP);
+			writeParameterToSPIFFS(p, PARAM_STATIC_ETH_GATEWAY);
+		}
+	}
+	request->send(200, "text/html", "Done. ESP will restart, connect to your router and go to <a href=\"http://" + mUniqueHostname + ".local\">" + mUniqueHostname + ".local</a>");
+	delay(3000);
+	ESP.restart();
 }
 
 void NetworkManager::writeParameterToSPIFFS(AsyncWebParameter *p, String parameter)
