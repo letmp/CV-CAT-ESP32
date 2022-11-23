@@ -1,27 +1,28 @@
 #include <Arduino.h>
-#include <Network/NetworkManager.h>
-#include <IO/IOManager.h>
 
-NetworkManager networkManager;
-IOManager ioManager;
+#include <Network/NetworkManager.h>
+#include <Network/NetworkData.h>
+#include <Persistence/PersistenceManager.h>
+#include <Hardware/HardwareManager.h>
+
+PersistenceManager persistenceManager;
+HardwareManager hardwareManager;
+
+NetworkData networkData(persistenceManager);
+NetworkManager networkManager(networkData, hardwareManager);
 
 void setup()
 {
   Serial.begin(115200);
   delay(5000);
 
+  hardwareManager.begin();
   networkManager.begin();
   
-  ioManager.begin();
-
-
-  // if(networkManager.isMaster) networkManager.startBroker();
-  // networkManager.initMdns();
-  // networkManager.initClients();
 }
 
 void loop()
 {
-  ioManager.loop();
-  // networkManager.loop();
+  hardwareManager.loop();
+  networkManager.loop();
 }

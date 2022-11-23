@@ -5,7 +5,7 @@
 #include <NeoPixelBus.h>
 #include <Streaming.h>
 
-class IOManager
+class HardwareManager
 {
 private:
     const uint16_t PixelCount = 2; // this example assumes 4 pixels, making it smaller will cause a failure
@@ -21,7 +21,7 @@ private:
     void initLEDs();
 
 public:
-    IOManager();
+    HardwareManager();
 
     void begin();
     void switchLED();

@@ -1,22 +1,22 @@
-#include "IOManager.h"
+#include "HardwareManager.h"
 
-IOManager::IOManager() : strip(PixelCount, PixelPin), white(10), black(0)
+HardwareManager::HardwareManager() : strip(PixelCount, PixelPin), white(10), black(0)
 {
 }
 
-void IOManager::begin()
+void HardwareManager::begin()
 {
     initButtons();
     initLEDs();
 }
 
-void IOManager::initButtons()
+void HardwareManager::initButtons()
 {
     pinMode(36, INPUT_PULLUP); // Buttons
     pinMode(39, INPUT_PULLUP);
 }
 
-void IOManager::initLEDs()
+void HardwareManager::initLEDs()
 {
 
     // this resets all the neopixels to an off state
@@ -24,7 +24,7 @@ void IOManager::initLEDs()
     strip.Show();
 }
 
-void IOManager::loop()
+void HardwareManager::loop()
 {
 
     static const int interval = 500; // publishes every second
