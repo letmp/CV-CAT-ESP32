@@ -130,13 +130,38 @@ void NetServiceHttp::handleGetHardwareData(AsyncWebServerRequest *request)
     AsyncResponseStream *response = request->beginResponseStream("application/json");
     DynamicJsonDocument json(1024);
     JsonArray buttons = json.createNestedArray("buttons");
-    JsonArray jacks = json.createNestedArray("jacks");
+    JsonArray jacksIn = json.createNestedArray("input-jacks");
+    JsonArray jacksOut = json.createNestedArray("output-jacks");
     JsonArray pots = json.createNestedArray("pots");
+
     buttons.add(rHardwareManager.buttons.button1);
     buttons.add(rHardwareManager.buttons.button2);
-    jacks.add(rHardwareManager.jacksIn.jack1);
+    buttons.add(rHardwareManager.buttons.button3);
+    buttons.add(rHardwareManager.buttons.button4);
+    buttons.add(rHardwareManager.buttons.button5);
+    buttons.add(rHardwareManager.buttons.button6);
+    buttons.add(rHardwareManager.buttons.button7);
+    buttons.add(rHardwareManager.buttons.button8);
+
+    jacksIn.add(rHardwareManager.jacksIn.jack1);
+    jacksIn.add(rHardwareManager.jacksIn.jack2);
+    jacksIn.add(rHardwareManager.jacksIn.jack3);
+    jacksIn.add(rHardwareManager.jacksIn.jack4);
+
+    jacksOut.add(rHardwareManager.jacksOut.jack1);
+    jacksOut.add(rHardwareManager.jacksOut.jack2);
+    jacksOut.add(rHardwareManager.jacksOut.jack3);
+    jacksOut.add(rHardwareManager.jacksOut.jack4);
+
     pots.add(rHardwareManager.pots.pot1);
     pots.add(rHardwareManager.pots.pot2);
+    pots.add(rHardwareManager.pots.pot3);
+    pots.add(rHardwareManager.pots.pot4);
+    pots.add(rHardwareManager.pots.pot5);
+    pots.add(rHardwareManager.pots.pot6);
+    pots.add(rHardwareManager.pots.pot7);
+    pots.add(rHardwareManager.pots.pot8);
+
     serializeJson(json, *response);
     request->send(response);
 }
