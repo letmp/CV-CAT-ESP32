@@ -1,5 +1,5 @@
-#ifndef WEBSERVICE_MANAGER_H
-#define WEBSERVICE_MANAGER_H
+#ifndef NET_SERVICE_HTTP_H
+#define NET_SERVICE_HTTP_H
 
 #include <Arduino.h>
 #include <AsyncTCP.h>
@@ -8,17 +8,17 @@
 
 #include <Hardware/HardwareManager.h>
 
-#include <Network/ConstantProvider.h>
-#include <Network/NetworkData.h>
+#include <Network/NetConstants.h>
+#include <Network/NetConfig.h>
 
-class WebserviceManager
+class NetServiceHttp
 {
 
 private:
 
-	HardwareManager &mHardwareManager;
+	HardwareManager &rHardwareManager;
+    NetConfig &rNetConfig;
 
-    NetworkData &mNetworkData;
 	AsyncWebServer mAsyncWebServer;
 	
 	void handleGetNetconfig(AsyncWebServerRequest *request);
@@ -31,7 +31,7 @@ private:
 	void handleGetIOSwitch(AsyncWebServerRequest *request);
 
 public:
-	WebserviceManager(NetworkData& networkData, HardwareManager& hardwareManager);
+	NetServiceHttp(NetConfig& networkData, HardwareManager& hardwareManager);
 	void begin();
 };
 

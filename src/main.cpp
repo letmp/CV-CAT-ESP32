@@ -1,15 +1,10 @@
 #include <Arduino.h>
 
-#include <Network/NetworkManager.h>
-#include <Network/NetworkData.h>
-#include <Persistence/PersistenceManager.h>
+#include <Network/NetManager.h>
 #include <Hardware/HardwareManager.h>
 
-PersistenceManager persistenceManager;
 HardwareManager hardwareManager;
-
-NetworkData networkData(persistenceManager);
-NetworkManager networkManager(networkData, hardwareManager);
+NetManager netManager(hardwareManager);
 
 void setup()
 {
@@ -17,12 +12,12 @@ void setup()
   delay(5000);
 
   hardwareManager.begin();
-  networkManager.begin();
+  netManager.begin();
   
 }
 
 void loop()
 {
   hardwareManager.loop();
-  networkManager.loop();
+  netManager.loop();
 }

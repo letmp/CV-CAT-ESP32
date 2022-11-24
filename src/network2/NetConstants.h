@@ -1,9 +1,9 @@
-#ifndef CONST_PROVIDER_H
-#define CONST_PROVIDER_H
+#ifndef NET_CONSTANTS_H
+#define NET_CONSTANTS_H
 
 #include <Arduino.h>
 
-class ConstantProvider
+class NetConstants
 {
 public:
 	static const int CON_TIMEOUT;

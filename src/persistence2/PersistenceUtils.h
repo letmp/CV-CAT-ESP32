@@ -5,13 +5,13 @@
 #include <SPIFFS.h>
 #include <Streaming.h>
 
-class PersistenceManager
+class PersistenceUtils
 {
 private:
 	void initSPIFFS();
 
 public:
-	PersistenceManager();
+	PersistenceUtils();
 
 	String readFileFromSPIFFS(fs::FS &fs, String path);
 	void writeFileToSPIFFS(fs::FS &fs, String path, const char *message);

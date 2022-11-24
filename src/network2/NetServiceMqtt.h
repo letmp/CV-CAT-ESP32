@@ -1,22 +1,21 @@
-#ifndef MQTT_MANAGER_H
-#define MQTT_MANAGER_H
+#ifndef NET_SERVICE_MQTT_H
+#define NET_SERVICE_MQTT_H
 
 #include <Arduino.h>
 #include <TinyMqtt.h>   // https://github.com/hsaturn/TinyMqtt
 
 #include <Hardware/HardwareManager.h>
 
-#include <Network/ConstantProvider.h>
-#include <Network/NetworkData.h>
+#include <Network/NetConstants.h>
+#include <Network/NetConfig.h>
 
-class MqttManager
+class NetServiceMqtt
 {
 
 private:
 	
-    HardwareManager &mHardwareManager;
-
-	NetworkData &mNetworkData;
+    HardwareManager &rHardwareManager;
+	NetConfig &rNetConfig;
 	
 	MqttBroker mBroker;
 	IPAddress mBrokerIp;
@@ -28,7 +27,7 @@ private:
 	static void stateUpdate(const MqttClient *, const Topic &topic, const char *payload, size_t);
 
 public:
-	MqttManager(NetworkData& networkData, HardwareManager& hardwareManager);
+	NetServiceMqtt(NetConfig& networkData, HardwareManager& hardwareManager);
 	void begin();
 	
 	void initClients();

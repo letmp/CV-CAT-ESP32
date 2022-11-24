@@ -1,11 +1,11 @@
-#include "PersistenceManager.h"
+#include "PersistenceUtils.h"
 
-PersistenceManager::PersistenceManager()
+PersistenceUtils::PersistenceUtils()
 {
   initSPIFFS();
 }
 
-void PersistenceManager::initSPIFFS()
+void PersistenceUtils::initSPIFFS()
 {
   Serial << "--- Mounting SPIFFS---" << endl;
   if (!SPIFFS.begin(true))
@@ -14,7 +14,7 @@ void PersistenceManager::initSPIFFS()
   }
 }
 
-String PersistenceManager::readFileFromSPIFFS(fs::FS &fs, String path)
+String PersistenceUtils::readFileFromSPIFFS(fs::FS &fs, String path)
 {
   Serial << "Try to read file [" << path.c_str() << "] ";
 
@@ -35,7 +35,7 @@ String PersistenceManager::readFileFromSPIFFS(fs::FS &fs, String path)
   return fileContent;
 }
 
-void PersistenceManager::writeFileToSPIFFS(fs::FS &fs, String path, const char *message)
+void PersistenceUtils::writeFileToSPIFFS(fs::FS &fs, String path, const char *message)
 {
   Serial << "Writing file [" << path.c_str() << "] with content [" << message << "]";
   File file = fs.open(path.c_str(), FILE_WRITE);
@@ -52,7 +52,7 @@ void PersistenceManager::writeFileToSPIFFS(fs::FS &fs, String path, const char *
   Serial << endl;
 }
 
-void PersistenceManager::removeFiles()
+void PersistenceUtils::removeFiles()
 {
   Serial << "Removing all files from SPIFFS" << endl;
   File root = SPIFFS.open("/");

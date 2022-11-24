@@ -1,14 +1,14 @@
-#ifndef NETWORK_MANAGER_H
-#define NETWORK_MANAGER_H
+#ifndef NET_MANAGER_H
+#define NET_MANAGER_H
 
 #include <Arduino.h>
 #include <ESPmDNS.h>
 #include <ETH.h>
 
-#include <Network/ConstantProvider.h>
-#include <Network/MqttManager.h>
-#include <Network/WebserviceManager.h>
-#include <Network/NetworkData.h>
+#include <Network/NetConstants.h>
+#include <Network/NetServiceMqtt.h>
+#include <Network/NetServiceHttp.h>
+#include <Network/NetConfig.h>
 
 #define ETH_ADDR 0		 // I²C-address of Ethernet PHY (0 or 1 for LAN8720, 31 for TLK110)
 #define ETH_POWER_PIN -1 // Pin# of the enable signal for the external crystal oscillator (-1 to disable for internal APLL source)
@@ -21,14 +21,14 @@
 #endif
 #define ETH_CLK_MODE ETH_CLOCK_GPIO17_OUT // ETH_CLOCK_GPIO0_IN
 
-class NetworkManager
+class NetManager
 {
 
 private:
 
-	NetworkData &mNetworkData;
-	WebserviceManager mWebserviceManager;
-	MqttManager mMqttManager;
+	NetConfig mNetConfig;
+	NetServiceHttp mNetServiceHttp;
+	NetServiceMqtt mNetServiceMqtt;
 
 	bool initWifiAP();
 	bool initWifiSTA();
@@ -36,7 +36,7 @@ private:
 	void initMdns();
 
 public:
-	NetworkManager(NetworkData& networkData, HardwareManager& hardwareManager);
+	NetManager(HardwareManager& hardwareManager);
 	void begin();
 	void loop();
 };

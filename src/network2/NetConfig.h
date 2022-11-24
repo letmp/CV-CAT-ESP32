@@ -2,15 +2,15 @@
 #define NETWORK_DATA_H
 
 #include <Arduino.h>
-#include <Network/ConstantProvider.h>
-#include <Persistence/PersistenceManager.h>
+#include <Network/NetConstants.h>
+#include <Persistence/PersistenceUtils.h>
 #include <Streaming.h>
 
-class NetworkData
+class NetConfig
 {
 
 private:
-	PersistenceManager &mPersistenceManager;
+	PersistenceUtils mPersistenceUtils;
     bool loadWifiConfig();
 	bool loadEthConfig();
 
@@ -29,7 +29,7 @@ public:
     bool hasStaticEthAddress;
     bool hasStaticWifiAddress;
 
-	NetworkData(PersistenceManager& pm);
+	NetConfig();
     void writeWifiConfig();
     void writeEthConfig();
 	
