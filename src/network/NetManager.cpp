@@ -10,7 +10,7 @@ NetManager::NetManager(HardwareManager& hm) :
 void NetManager::begin()
 {
 	mNetConfig.init();
-	
+
 	if (mNetConfig.hasWifiConfig)
 	{
 		initWifiSTA();
@@ -82,8 +82,9 @@ bool NetManager::initWifiSTA()
 	{
 		mNetConfig.wifiIp = WiFi.localIP();
 		mNetConfig.wifiIpGateway = WiFi.gatewayIP();
-		Serial << "Retrieved ";
+		Serial << "DHCP assigned ";
 	}
+	else Serial << "Static ";
 
 	Serial << "IP Address [" << mNetConfig.wifiIp;
 	Serial << "] / Gateway IP [" << mNetConfig.wifiIpGateway << "]" << endl;
@@ -126,9 +127,10 @@ bool NetManager::initETH()
 	{
 		mNetConfig.ethIp = ETH.localIP();
 		mNetConfig.ethIpGateway = ETH.gatewayIP();
-		Serial << "Retrieved ";
+		Serial << "DHCP assigned ";
 	}
-
+	else Serial << "Static ";
+	
 	Serial << "IP Address [" << mNetConfig.ethIp;
 	Serial << "] / Gateway IP [" << mNetConfig.ethIpGateway << "]" << endl;
 
