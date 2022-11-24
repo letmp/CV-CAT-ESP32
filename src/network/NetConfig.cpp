@@ -2,6 +2,10 @@
 
 NetConfig::NetConfig()
 {
+}
+
+void NetConfig::init()
+{
     char buffer[23];
     snprintf(buffer, 23, "%s%llX", NetConstants::DEVICENAME, ESP.getEfuseMac());
     Serial << endl << "--- Setting unique hostname [" << buffer << "] ---" << endl;
@@ -26,7 +30,7 @@ bool NetConfig::loadWifiConfig()
         return false;
     }
 
-    if (wifiIpStr != "" || wifiIpGatewayStr != "")
+    if (wifiIpStr != "" && wifiIpStr != "0.0.0.0" && wifiIpGatewayStr != "" && wifiIpGatewayStr != "0.0.0.0")
     {
         hasStaticWifiAddress =
             wifiIp.fromString(wifiIpStr.c_str()) &&
@@ -42,7 +46,7 @@ bool NetConfig::loadEthConfig()
     String ethIpStr = mPersistenceUtils.readFileFromSPIFFS(SPIFFS, "/" + NetConstants::ETH_IP_STATIC);
     String ethIpGatewayStr = mPersistenceUtils.readFileFromSPIFFS(SPIFFS, "/" + NetConstants::ETH_GATEWAY_STATIC);
 
-    if (ethIpStr != "" || ethIpGatewayStr != "")
+    if (ethIpStr != "" && ethIpStr != "0.0.0.0" && ethIpGatewayStr != "" && ethIpGatewayStr != "0.0.0.0")
     {
         hasStaticEthAddress =
             ethIp.fromString(ethIpStr.c_str()) &&
@@ -52,14 +56,16 @@ bool NetConfig::loadEthConfig()
     return true;
 }
 
-void NetConfig::writeWifiConfig(){
+void NetConfig::writeWifiConfig()
+{
     mPersistenceUtils.writeFileToSPIFFS(SPIFFS, "/" + NetConstants::WIFI_SSID, wifiSSID.c_str());
     mPersistenceUtils.writeFileToSPIFFS(SPIFFS, "/" + NetConstants::WIFI_PWD, wifiPWD.c_str());
     mPersistenceUtils.writeFileToSPIFFS(SPIFFS, "/" + NetConstants::WIFI_IP_STATIC, wifiIp.toString().c_str());
     mPersistenceUtils.writeFileToSPIFFS(SPIFFS, "/" + NetConstants::WIFI_GATEWAY_STATIC, wifiIpGateway.toString().c_str());
 }
 
-void NetConfig::writeEthConfig(){
+void NetConfig::writeEthConfig()
+{
     mPersistenceUtils.writeFileToSPIFFS(SPIFFS, "/" + NetConstants::ETH_IP_STATIC, ethIp.toString().c_str());
     mPersistenceUtils.writeFileToSPIFFS(SPIFFS, "/" + NetConstants::ETH_GATEWAY_STATIC, ethIpGateway.toString().c_str());
 }

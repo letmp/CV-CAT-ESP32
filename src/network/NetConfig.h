@@ -31,6 +31,7 @@ public:
     bool hasStaticWifiAddress;
 
 	NetConfig();
+	void init();
     void writeWifiConfig();
     void writeEthConfig();
 	

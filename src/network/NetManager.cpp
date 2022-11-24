@@ -9,6 +9,7 @@ NetManager::NetManager(HardwareManager& hm) :
 
 void NetManager::begin()
 {
+	mNetConfig.init();
 	
 	if (mNetConfig.hasWifiConfig)
 	{

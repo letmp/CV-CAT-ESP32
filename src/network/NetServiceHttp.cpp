@@ -88,14 +88,22 @@ void NetServiceHttp::handlePostNetconfig(AsyncWebServerRequest *request)
                 rNetConfig.wifiSSID = p->value();
             if (p->name() == NetConstants::WIFI_PWD)
                 rNetConfig.wifiPWD = p->value();
-            if (p->name() == NetConstants::WIFI_IP_STATIC)
-                rNetConfig.wifiIp = IPAddress().fromString(p->value());
-            if (p->name() == NetConstants::WIFI_GATEWAY_STATIC)
-                rNetConfig.wifiIpGateway = IPAddress().fromString(p->value());
-            if (p->name() == NetConstants::ETH_IP_STATIC)
-                rNetConfig.ethIp = IPAddress().fromString(p->value());
-            if (p->name() == NetConstants::ETH_GATEWAY_STATIC)
-                rNetConfig.ethIpGateway = IPAddress().fromString(p->value());
+            if (p->name() == NetConstants::WIFI_IP_STATIC){
+                if(p->value() != "") rNetConfig.wifiIp.fromString(p->value()); //try to set new ip if given
+                else rNetConfig.wifiIp.fromString("0.0.0.0"); // else reset ip so that DHCP is used after reboot
+            }
+            if (p->name() == NetConstants::WIFI_GATEWAY_STATIC){
+                if(p->value() != "") rNetConfig.wifiIpGateway.fromString(p->value());
+                else rNetConfig.wifiIpGateway.fromString("0.0.0.0");
+            }
+            if (p->name() == NetConstants::ETH_IP_STATIC){
+                if(p->value() != "") rNetConfig.ethIp.fromString(p->value());
+                else rNetConfig.ethIp.fromString("0.0.0.0");
+            }
+            if (p->name() == NetConstants::ETH_GATEWAY_STATIC){
+                if(p->value() != "") rNetConfig.ethIpGateway.fromString(p->value());
+                else rNetConfig.ethIpGateway.fromString("0.0.0.0");
+            }
         }
     }
     rNetConfig.writeWifiConfig();
