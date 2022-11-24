@@ -5,10 +5,10 @@
 #include <ESPmDNS.h>
 #include <ETH.h>
 
-#include <Network/NetConstants.h>
-#include <Network/NetServiceMqtt.h>
-#include <Network/NetServiceHttp.h>
-#include <Network/NetConfig.h>
+#include <network/NetServiceMqtt.h>
+#include <network/NetServiceHttp.h>
+#include <network/NetConstants.h>
+#include <network/NetConfig.h>
 
 #define ETH_ADDR 0		 // I²C-address of Ethernet PHY (0 or 1 for LAN8720, 31 for TLK110)
 #define ETH_POWER_PIN -1 // Pin# of the enable signal for the external crystal oscillator (-1 to disable for internal APLL source)

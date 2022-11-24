@@ -10,8 +10,7 @@ NetServiceMqtt::NetServiceMqtt(NetConfig &nd, HardwareManager &hm) : rHardwareMa
 
 void NetServiceMqtt::begin()
 {
-    Serial << endl
-           << "--- Starting local broker --- " << endl;
+    Serial << endl << "--- Starting local broker --- " << endl;
     mBroker.begin();
 }
 

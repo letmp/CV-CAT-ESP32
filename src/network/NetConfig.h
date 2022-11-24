@@ -2,9 +2,10 @@
 #define NETWORK_DATA_H
 
 #include <Arduino.h>
-#include <Network/NetConstants.h>
-#include <Persistence/PersistenceUtils.h>
 #include <Streaming.h>
+
+#include <network/NetConstants.h>
+#include <persistence/PersistenceUtils.h>
 
 class NetConfig
 {

@@ -2,8 +2,8 @@
 #include <AsyncElegantOTA.h> // has to be included here instead of header file -> https://community.platformio.org/t/main-cpp-o-bss-asyncelegantota-0x0-multiple-definition-of-asyncelegantota/26733/3
 
 NetServiceHttp::NetServiceHttp(NetConfig &nd, HardwareManager &hm) : rHardwareManager{hm},
-                                                                             rNetConfig{nd},
-                                                                             mAsyncWebServer(NetConstants::PORT_HTTP)
+                                                                     rNetConfig{nd},
+                                                                     mAsyncWebServer(NetConstants::PORT_HTTP)
 {
 }
 
@@ -15,9 +15,10 @@ void NetServiceHttp::begin()
     mAsyncWebServer.on("/", HTTP_POST, std::bind(&NetServiceHttp::handlePostNetconfig, this, std::placeholders::_1));
     mAsyncWebServer.serveStatic("/", SPIFFS, "/");
 
-    mAsyncWebServer.on("/io/", HTTP_GET, std::bind(&NetServiceHttp::handleGetIO, this, std::placeholders::_1));
-    mAsyncWebServer.on("/io/switch", HTTP_GET, std::bind(&NetServiceHttp::handleGetIOSwitch, this, std::placeholders::_1));
-    mAsyncWebServer.serveStatic("/io/", SPIFFS, "/");
+    mAsyncWebServer.on("/hardware/", HTTP_GET, std::bind(&NetServiceHttp::handleGetHardware, this, std::placeholders::_1));
+    mAsyncWebServer.on("/hardware/switch", HTTP_GET, std::bind(&NetServiceHttp::handleGetHardwareSwitch, this, std::placeholders::_1));
+    mAsyncWebServer.on("/hardware/data", HTTP_GET, std::bind(&NetServiceHttp::handleGetHardwareData, this, std::placeholders::_1));
+    mAsyncWebServer.serveStatic("/hardware/", SPIFFS, "/");
 
     if (rNetConfig.hasWifiConfig)
         AsyncElegantOTA.begin(&mAsyncWebServer);
@@ -26,19 +27,9 @@ void NetServiceHttp::begin()
     Serial << "http:\\\\" << rNetConfig.uniqueHostname << ".local" << endl;
 }
 
-void NetServiceHttp::handleGetIO(AsyncWebServerRequest *request)
-{
-    request->send(SPIFFS, "/io.html", "text/html");
-}
-void NetServiceHttp::handleGetIOSwitch(AsyncWebServerRequest *request)
-{
-    request->send(SPIFFS, "/io.html", "text/html");
-}
-
 void NetServiceHttp::handleGetNetconfig(AsyncWebServerRequest *request)
 {
-    request->send(SPIFFS, "/netconfig.html", String(), false, [this](const String &var) -> String
-                  { return this->processTemplateNetconfig(var); });
+    request->send(SPIFFS, "/netconfig.html", String(), false, [this](const String &var) -> String { return this->processTemplateNetconfig(var); });
 }
 
 String NetServiceHttp::processTemplateNetconfig(const String &var)
@@ -109,7 +100,35 @@ void NetServiceHttp::handlePostNetconfig(AsyncWebServerRequest *request)
     }
     rNetConfig.writeWifiConfig();
     rNetConfig.writeEthConfig();
+
     request->send(200, "text/html", "Done. ESP will restart, connect to your router and go to <a href=\"http://" + rNetConfig.uniqueHostname + ".local\">" + rNetConfig.uniqueHostname + ".local</a>");
     delay(3000);
     ESP.restart();
+}
+
+void NetServiceHttp::handleGetHardware(AsyncWebServerRequest *request)
+{
+    request->send(SPIFFS, "/hardware.html", "text/html");
+}
+void NetServiceHttp::handleGetHardwareSwitch(AsyncWebServerRequest *request)
+{
+    int newVal = 0;
+    if(rHardwareManager.jacksOut.jack1 == 0) newVal = 4095;
+    rHardwareManager.jacksOut = (JacksOut){.jack1 = newVal, .jack2 = newVal};
+    request->send(200, "text/plain", "switched");
+}
+void NetServiceHttp::handleGetHardwareData(AsyncWebServerRequest *request)
+{
+    AsyncResponseStream *response = request->beginResponseStream("application/json");
+    DynamicJsonDocument json(1024);
+    JsonArray buttons = json.createNestedArray("buttons");
+    JsonArray jacks = json.createNestedArray("jacks");
+    JsonArray pots = json.createNestedArray("pots");
+    buttons.add(rHardwareManager.buttons.button1);
+    buttons.add(rHardwareManager.buttons.button2);
+    jacks.add(rHardwareManager.jacksIn.jack1);
+    pots.add(rHardwareManager.pots.pot1);
+    pots.add(rHardwareManager.pots.pot2);
+    serializeJson(json, *response);
+    request->send(response);
 }

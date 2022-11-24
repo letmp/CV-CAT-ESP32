@@ -3,11 +3,11 @@
 
 #include <Arduino.h>
 #include <TinyMqtt.h>   // https://github.com/hsaturn/TinyMqtt
+#include <Streaming.h>
 
-#include <Hardware/HardwareManager.h>
-
-#include <Network/NetConstants.h>
-#include <Network/NetConfig.h>
+#include <hardware/HardwareManager.h>
+#include <network/NetConstants.h>
+#include <network/NetConfig.h>
 
 class NetServiceMqtt
 {

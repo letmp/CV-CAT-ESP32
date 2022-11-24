@@ -5,6 +5,42 @@
 #include <NeoPixelBus.h>
 #include <Streaming.h>
 
+struct Buttons{
+   int button1;
+   int button2;
+   int button3;
+   int button4;
+   int button5;
+   int button6;
+   int button7;
+   int button8;
+};
+
+struct JacksIn{
+   int jack1;
+   int jack2;
+   int jack3;
+   int jack4;
+};
+
+struct JacksOut{
+   int jack1;
+   int jack2;
+   int jack3;
+   int jack4;
+};
+
+struct Pots{
+   int pot1;
+   int pot2;
+   int pot3;
+   int pot4;
+   int pot5;
+   int pot6;
+   int pot7;
+   int pot8;
+};
+
 class HardwareManager
 {
 private:
@@ -13,19 +49,19 @@ private:
     static const uint8_t A6 = (uint8_t)34U;
     NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod> strip;
 
-    RgbColor white;
-    RgbColor black;
-    bool mLedOn = false;
-
     void initButtons();
     void initLEDs();
+    void updateLEDs();
 
 public:
+    Buttons buttons;
+    JacksIn jacksIn;
+    JacksOut jacksOut;
+    Pots pots;
+
     HardwareManager();
 
     void begin();
-    void switchLED();
-
     void loop();
     
 };
