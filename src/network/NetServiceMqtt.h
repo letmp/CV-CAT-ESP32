@@ -2,8 +2,10 @@
 #define NET_SERVICE_MQTT_H
 
 #include <Arduino.h>
-#include <TinyMqtt.h>   // https://github.com/hsaturn/TinyMqtt
+#include <TinyMqtt.h> // https://github.com/hsaturn/TinyMqtt
+#include <ESPmDNS.h>
 #include <Streaming.h>
+#include <map>
 
 #include <hardware/HardwareManager.h>
 #include <network/NetConstants.h>
@@ -13,26 +15,34 @@ class NetServiceMqtt
 {
 
 private:
-	
-    HardwareManager &rHardwareManager;
+	HardwareManager &rHardwareManager;
 	NetConfig &rNetConfig;
-	
-	MqttBroker mBroker;
-	IPAddress mBrokerIp;
-	uint16_t mBrokerPort;
-	MqttClient mClientState;
-	MqttClient mClientDataTransfer;
-	std::string mTopicState = "states/update";
 
-	static void stateUpdate(const MqttClient *, const Topic &topic, const char *payload, size_t);
+	MqttBroker mBroker;
+
+	MqttClient mClientLocal;
+	std::map<String, MqttClient> mClientMap;
+
+	std::string mTopicState = "states/update";
+	std::string mTopicData = "data/update";
+
+	void insertClient(String ip, bool isEth);
+	void initClient(MqttClient client);
+	
+	void notifyBroker(MqttClient client, std::string topic, String message);
+	static void callbackFunction(const MqttClient *, const Topic &topic, const char *payload, size_t);
 
 public:
-	NetServiceMqtt(NetConfig& networkData, HardwareManager& hardwareManager);
+	NetServiceMqtt(NetConfig &networkData, HardwareManager &hardwareManager);
 	void begin();
-	
-	void initClients();
-	IPAddress findStatusBroker();
-	
+
+	void findRemoteBrokers();
+	void updateRemoteBrokerList();
+
+	// update remotebrokerlist on notify
+	// listen to local broker topics
+	// send to local/remote broker topics
+
 	void loop();
 };
 

@@ -25,12 +25,14 @@ void NetManager::begin()
 	mNetServiceHttp.begin();
 	MDNS.addService("http", "tcp", NetConstants::PORT_HTTP);
 
-	// if(networkManager.isMaster) networkManager.startBroker();
-	//MDNS.addService("mqtt", "tcp", ConstProvider::PORT_MQTT);
-  // networkManager.initClients();
+	/*mNetServiceMqtt.begin();
+	MDNS.addService("mqtt", "tcp", NetConstants::PORT_MQTT);
+	MDNS.addServiceTxt("mqtt", "tcp","eth", mNetConfig.ethIp.toString());
+	MDNS.addServiceTxt("mqtt", "tcp","wifi", mNetConfig.wifiIp.toString());
+
+	delay(1000);
+	mNetServiceMqtt.findRemoteBrokers();*/
 }
-
-
 
 bool NetManager::initWifiAP()
 {
@@ -145,8 +147,7 @@ void NetManager::initMdns()
 		Serial << '.';
 		delay(1000);
 	}
-	Serial << " ---" << endl
-		   << "Hostname [" << mNetConfig.uniqueHostname << "]" << endl;
+	Serial << " ---" << endl << "Hostname [" << mNetConfig.uniqueHostname << "]" << endl;
 }
 
 
