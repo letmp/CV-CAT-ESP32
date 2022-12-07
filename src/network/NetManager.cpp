@@ -10,15 +10,10 @@ NetManager::NetManager(HardwareManager& hm) :
 void NetManager::begin()
 {
 	mNetConfig.init();
-
-	if (mNetConfig.hasWifiConfig)
-	{
-		initWifiSTA();
-	}
-	else
-	{
-		initWifiAP();
-	}
+	bool staSuccess = false; 
+	if (mNetConfig.hasWifiConfig) staSuccess = initWifiSTA();
+	if(!staSuccess)	initWifiAP();
+	
 	initETH();
 	initMdns();
 
