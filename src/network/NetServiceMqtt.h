@@ -21,13 +21,13 @@ private:
 	MqttBroker mBroker;
 
 	MqttClient mClientLocal;
-	std::map<String, MqttClient> mClientMap;
-
+	std::map<String, MqttClient*> mClientMap;
+	
 	std::string mTopicState = "states/update";
 	std::string mTopicData = "data/update";
 
-	void insertClient(String ip, bool isEth);
-	void initClient(MqttClient client);
+	void addRemoteBroker(const String &ip);
+	void subscribeClient(MqttClient &client);
 	
 	void notifyBroker(MqttClient client, std::string topic, String message);
 	static void callbackFunction(const MqttClient *, const Topic &topic, const char *payload, size_t);
