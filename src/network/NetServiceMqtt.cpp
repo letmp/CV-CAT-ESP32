@@ -12,9 +12,13 @@ void NetServiceMqtt::begin()
     Serial << endl << "--- Starting local MQTT broker --- " << endl;
     mBroker.begin();
 
-    subscribeClient(mClientLocal);
-    mClientMap.emplace(rNetConfig.ethIp.toString(), &mClientLocal);
-    Serial << "Added local broker @ IP [" << rNetConfig.ethIp.toString() << "]";
+    mClientMap[rNetConfig.ethIp.toString()] = &mClientLocal;
+    mClientLocal.subscribe(mTopicState);
+    mClientLocal.subscribe(mTopicData);
+    mClientLocal.setCallback(NetServiceMqtt::callbackFunction);
+
+    Serial << "Added local broker @ IP [" << rNetConfig.ethIp.toString() << "]" << endl;
+    
 }
 
 void NetServiceMqtt::findRemoteBrokers()
@@ -28,7 +32,7 @@ void NetServiceMqtt::findRemoteBrokers()
         String wifiIpStr = MDNS.txt(i, "wifi");
         Serial << "Found remote broker [" << MDNS.hostname(i) << "] @ ";
         Serial << "IP [" << MDNS.IP(i) << ":" << MDNS.port(i) << "] / ";
-        if (ethIpStr != "0.0.0.0")
+        /*if (ethIpStr != "0.0.0.0")
         {
             if (mClientMap.find(ethIpStr) == mClientMap.end())
             {
@@ -38,12 +42,12 @@ void NetServiceMqtt::findRemoteBrokers()
             else
                 Serial << "--> ETH address already stored";
         }
-        else if (wifiIpStr != "0.0.0.0")
+        else */if (wifiIpStr != "0.0.0.0")
         {
             if (mClientMap.find(wifiIpStr) == mClientMap.end())
             {
                 addRemoteBroker(wifiIpStr);
-                Serial << "--> added broker via WIFI Address [" << ethIpStr << "]";
+                Serial << "--> added broker via WIFI Address [" << wifiIpStr << "]";
             }
             else
                 Serial << "--> WIFI address already stored";
@@ -54,10 +58,20 @@ void NetServiceMqtt::findRemoteBrokers()
 
 void NetServiceMqtt::addRemoteBroker(const String &ip)
 {
-    MqttClient clientRemote;
-    clientRemote.connect(ip.c_str(), NetConstants::PORT_MQTT);
-    subscribeClient(clientRemote);
-    mClientMap.emplace(ip, &clientRemote);
+    /*MqttClient* client = new MqttClient();
+    
+    client->subscribe(mTopicState);
+    client->subscribe(mTopicData);
+    client->setCallback(NetServiceMqtt::callbackFunction);
+    client->connect(ip.c_str(), NetConstants::PORT_MQTT);
+    mClientMap[ip] = client;
+    */
+    mClientRemote.connect(ip.c_str(), NetConstants::PORT_MQTT);
+    mClientRemote.subscribe(mTopicState);
+    mClientRemote.subscribe(mTopicData);
+    mClientRemote.setCallback(NetServiceMqtt::callbackFunction);
+    mClientMap[ip] = &mClientRemote;
+    
 }
 
 void NetServiceMqtt::subscribeClient(MqttClient &client)
@@ -79,8 +93,16 @@ void NetServiceMqtt::callbackFunction(const MqttClient *, const Topic &topic, co
 
 void NetServiceMqtt::loop()
 {
-    /*for (std::map<String, MqttClient *>::iterator iter = mClientMap.begin(); iter != mClientMap.end(); ++iter)
+    mBroker.loop();
+    mClientLocal.loop();
+    mClientRemote.loop();
+    mClientRemote.publish(mTopicState, String("ping from " + rNetConfig.ethIp.toString()) );
+
+    /*for (std::map<String, MqttClient*>::iterator iter = mClientMap.begin(); iter != mClientMap.end(); ++iter)
     {
-        iter->second->publish(mTopicState, String("ping from " + rNetConfig.ethIp.toString() + " to" + iter->first));
+        iter->second->loop();
+        if(iter->first != rNetConfig.ethIp.toString())
+            iter->second->publish(mTopicState, String("ping from " + rNetConfig.ethIp.toString() + " to" + iter->first));
     }*/
+    
 }

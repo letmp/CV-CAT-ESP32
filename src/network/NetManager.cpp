@@ -14,19 +14,20 @@ void NetManager::begin()
 	if (mNetConfig.hasWifiConfig) staSuccess = initWifiSTA();
 	if(!staSuccess)	initWifiAP();
 	
-	initETH();
+	//initETH();
 	initMdns();
 
 	mNetServiceHttp.begin();
 	MDNS.addService("http", "tcp", NetConstants::PORT_HTTP);
 
-	mNetServiceMqtt.begin();
+	/*mNetServiceMqtt.begin();
 	MDNS.addService("mqtt", "tcp", NetConstants::PORT_MQTT);
 	MDNS.addServiceTxt("mqtt", "tcp","eth", mNetConfig.ethIp.toString());
 	MDNS.addServiceTxt("mqtt", "tcp","wifi", mNetConfig.wifiIp.toString());
 
 	delay(1000);
-	mNetServiceMqtt.findRemoteBrokers();
+	mNetServiceMqtt.findRemoteBrokers();*/
+
 }
 
 bool NetManager::initWifiAP()

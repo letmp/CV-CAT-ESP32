@@ -11,6 +11,7 @@
 #include <network/NetConstants.h>
 #include <network/NetConfig.h>
 
+
 class NetServiceMqtt
 {
 
@@ -21,13 +22,17 @@ private:
 	MqttBroker mBroker;
 
 	MqttClient mClientLocal;
+	MqttClient mClientRemote;
 	std::map<String, MqttClient*> mClientMap;
 	
 	std::string mTopicState = "states/update";
 	std::string mTopicData = "data/update";
 
 	void addRemoteBroker(const String &ip);
+	
+
 	void subscribeClient(MqttClient &client);
+	void subscribeClient(std::shared_ptr<MqttClient> client);
 	
 	void notifyBroker(MqttClient client, std::string topic, String message);
 	static void callbackFunction(const MqttClient *, const Topic &topic, const char *payload, size_t);
