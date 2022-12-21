@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <ESPmDNS.h>
 #include <ETH.h>
+#include <WiFi.h>
 
 #include <network/NetServiceMqtt.h>
 #include <network/NetServiceHttp.h>
@@ -21,6 +22,11 @@
 #endif
 #define ETH_CLK_MODE ETH_CLOCK_GPIO17_OUT // ETH_CLOCK_GPIO0_IN
 
+#ifdef ETH_PHY_POWER // Important! Otherwise LAN will not work correctly
+#undef ETH_PHY_POWER
+#endif
+#define ETH_PHY_POWER 5 // -1
+
 class NetManager
 {
 
@@ -32,7 +38,10 @@ private:
 
 	bool initWifiAP();
 	bool initWifiSTA();
+	
+	void initEthEventListener();
 	bool initETH();
+	
 	void initMdns();
 
 public:

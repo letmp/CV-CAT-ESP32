@@ -12,13 +12,10 @@ void NetServiceMqtt::begin()
     Serial << endl << "--- Starting local MQTT broker --- " << endl;
     mBroker.begin();
 
+    subscribeClient(&mClientLocal);
     mClientMap[rNetConfig.ethIp.toString()] = &mClientLocal;
-    mClientLocal.subscribe(mTopicState);
-    mClientLocal.subscribe(mTopicData);
-    mClientLocal.setCallback(NetServiceMqtt::callbackFunction);
 
     Serial << "Added local broker @ IP [" << rNetConfig.ethIp.toString() << "]" << endl;
-    
 }
 
 void NetServiceMqtt::findRemoteBrokers()
@@ -32,22 +29,22 @@ void NetServiceMqtt::findRemoteBrokers()
         String wifiIpStr = MDNS.txt(i, "wifi");
         Serial << "Found remote broker [" << MDNS.hostname(i) << "] @ ";
         Serial << "IP [" << MDNS.IP(i) << ":" << MDNS.port(i) << "] / ";
-        /*if (ethIpStr != "0.0.0.0")
+        if (ethIpStr != "0.0.0.0")
         {
             if (mClientMap.find(ethIpStr) == mClientMap.end())
             {
+                Serial << "--> adding broker via ETH Address [" << ethIpStr << "]";
                 addRemoteBroker(ethIpStr);
-                Serial << "--> added broker via ETH Address [" << ethIpStr << "]";
             }
             else
                 Serial << "--> ETH address already stored";
         }
-        else */if (wifiIpStr != "0.0.0.0")
+        else if (wifiIpStr != "0.0.0.0")
         {
             if (mClientMap.find(wifiIpStr) == mClientMap.end())
             {
+                Serial << "--> adding broker via WIFI Address [" << wifiIpStr << "] ";
                 addRemoteBroker(wifiIpStr);
-                Serial << "--> added broker via WIFI Address [" << wifiIpStr << "]";
             }
             else
                 Serial << "--> WIFI address already stored";
@@ -58,27 +55,33 @@ void NetServiceMqtt::findRemoteBrokers()
 
 void NetServiceMqtt::addRemoteBroker(const String &ip)
 {
-    /*MqttClient* client = new MqttClient();
+    MqttClient* pNewClient = new MqttClient();
+    unsigned long currentMillis = millis();
+	unsigned long previousMillis = currentMillis;
+
+    while(not pNewClient->connected()) {
+        currentMillis = millis();
+        pNewClient->connect(ip.c_str(), NetConstants::PORT_MQTT);
+        if (currentMillis - previousMillis >= NetConstants::CON_TIMEOUT)
+		{
+			Serial <<" failed!";
+			break;
+		}
+        Serial << ".";
+        delay(500);
+    }
     
-    client->subscribe(mTopicState);
-    client->subscribe(mTopicData);
-    client->setCallback(NetServiceMqtt::callbackFunction);
-    client->connect(ip.c_str(), NetConstants::PORT_MQTT);
-    mClientMap[ip] = client;
-    */
-    mClientRemote.connect(ip.c_str(), NetConstants::PORT_MQTT);
-    mClientRemote.subscribe(mTopicState);
-    mClientRemote.subscribe(mTopicData);
-    mClientRemote.setCallback(NetServiceMqtt::callbackFunction);
-    mClientMap[ip] = &mClientRemote;
+    subscribeClient(pNewClient);
+
+    mClientMap[ip] = pNewClient;
     
 }
 
-void NetServiceMqtt::subscribeClient(MqttClient &client)
+void NetServiceMqtt::subscribeClient(MqttClient *client)
 {
-    client.subscribe(mTopicState);
-    client.subscribe(mTopicData);
-    client.setCallback(NetServiceMqtt::callbackFunction);
+    client->subscribe(mTopicState);
+    client->subscribe(mTopicData);
+    client->setCallback(NetServiceMqtt::callbackFunction);
 }
 
 void NetServiceMqtt::notifyBroker(MqttClient client, std::string topic, String message)
@@ -95,14 +98,28 @@ void NetServiceMqtt::loop()
 {
     mBroker.loop();
     mClientLocal.loop();
-    mClientRemote.loop();
-    mClientRemote.publish(mTopicState, String("ping from " + rNetConfig.ethIp.toString()) );
+    
 
-    /*for (std::map<String, MqttClient*>::iterator iter = mClientMap.begin(); iter != mClientMap.end(); ++iter)
+    static const int intervalA = 5000;  // publishes every 5s (please avoid usage of delay())
+    static uint32_t timerA = millis() + intervalA;
+
+    if (millis() > timerA)
     {
-        iter->second->loop();
-        if(iter->first != rNetConfig.ethIp.toString())
-            iter->second->publish(mTopicState, String("ping from " + rNetConfig.ethIp.toString() + " to" + iter->first));
-    }*/
+        timerA += intervalA;
+
+        for (std::map<String, MqttClient*>::iterator iter = mClientMap.begin(); iter != mClientMap.end(); ++iter)
+        {
+            iter->second->loop();
+
+            if (not iter->second->connected()){
+                Serial << millis() << " // not connected to ip [" <<iter->first << "] -> removing from clientlist" << endl;
+                mClientMap.erase(iter);
+            }
+            else
+                iter->second->publish(mTopicState, String("ping from " + rNetConfig.ethIp.toString() + " to " + iter->first));
+        }
+    }
+    
+    
     
 }
