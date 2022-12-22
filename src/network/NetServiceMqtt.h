@@ -31,19 +31,14 @@ private:
 
 	void subscribeClient(MqttClient *client);
 	
-	void notifyBroker(MqttClient client, std::string topic, String message);
 	static void callbackFunction(const MqttClient *, const Topic &topic, const char *payload, size_t);
+	
 
 public:
 	NetServiceMqtt(NetConfig &networkData, HardwareManager &hardwareManager);
 	void begin();
 
 	void findRemoteBrokers();
-	void updateRemoteBrokerList();
-
-	// update remotebrokerlist on notify
-	// listen to local broker topics
-	// send to local/remote broker topics
 
 	void loop();
 };
