@@ -61,7 +61,7 @@ void NetServiceMqtt::addRemoteBroker(const String &ip)
 
     while(not pNewClient->connected()) {
         currentMillis = millis();
-        pNewClient->connect(ip.c_str(), NetConstants::PORT_MQTT);
+        pNewClient->connect(ip.c_str(), NetConstants::PORT_MQTT, 86400); // keep alive 86400 = 24hours
         if (currentMillis - previousMillis >= NetConstants::CON_TIMEOUT)
 		{
 			Serial <<" failed!";
@@ -82,24 +82,13 @@ void NetServiceMqtt::subscribeClient(MqttClient *client)
     client->subscribe(mTopicState);
     client->subscribe(mTopicData);
     client->setCallback(NetServiceMqtt::callbackFunction);
-}
-
-void NetServiceMqtt::notifyBroker(MqttClient client, std::string topic, String message)
-{
-    client.publish(topic, message);
-}
-
-void NetServiceMqtt::callbackFunction(const MqttClient *, const Topic &topic, const char *payload, size_t)
-{
-    Serial << "--> Callback [" << topic.c_str() << "] [" << payload << "]" << endl;
+    //client->setCallback(std::bind(&NetServiceMqtt::callBackBind, this, std::placeholders::_1));
 }
 
 void NetServiceMqtt::loop()
 {
     mBroker.loop();
-    mClientLocal.loop();
     
-
     static const int intervalA = 5000;  // publishes every 5s (please avoid usage of delay())
     static uint32_t timerA = millis() + intervalA;
 
@@ -118,8 +107,11 @@ void NetServiceMqtt::loop()
             else
                 iter->second->publish(mTopicState, String("ping from " + rNetConfig.ethIp.toString() + " to " + iter->first));
         }
-    }
+    }    
+}
+
+void NetServiceMqtt::callbackFunction(const MqttClient *, const Topic &topic, const char *payload, size_t)
+{
     
-    
-    
+    Serial << "--> Callback [" << topic.c_str() << "] [" << payload << "]" << endl;
 }
