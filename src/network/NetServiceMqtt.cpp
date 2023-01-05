@@ -13,6 +13,7 @@ void NetServiceMqtt::begin()
     mBroker.begin();
 
     subscribeClient(&mClientLocal);
+
     mClientMap[rNetConfig.ethIp.toString()] = &mClientLocal;
 
     Serial << "Added local broker @ IP [" << rNetConfig.ethIp.toString() << "]" << endl;
@@ -61,7 +62,7 @@ void NetServiceMqtt::addRemoteBroker(const String &ip)
 
     while(not pNewClient->connected()) {
         currentMillis = millis();
-        pNewClient->connect(ip.c_str(), NetConstants::PORT_MQTT, 86400); // keep alive 86400 = 24hours
+        pNewClient->connect(ip.c_str(), NetConstants::PORT_MQTT, 43200); // keep alive 86400 = 24hours
         if (currentMillis - previousMillis >= NetConstants::CON_TIMEOUT)
 		{
 			Serial <<" failed!";
@@ -72,17 +73,16 @@ void NetServiceMqtt::addRemoteBroker(const String &ip)
     }
     
     subscribeClient(pNewClient);
-
-    mClientMap[ip] = pNewClient;
-    
+    mClientMap[ip] = pNewClient;    
 }
 
 void NetServiceMqtt::subscribeClient(MqttClient *client)
 {
+    //MqttReceiver* receiver = new MqttReceiver;
+    MqttClassBinder<MqttReceiver>::onPublish(client, mReceiver);
     client->subscribe(mTopicState);
     client->subscribe(mTopicData);
-    client->setCallback(NetServiceMqtt::callbackFunction);
-    //client->setCallback(std::bind(&NetServiceMqtt::callBackBind, this, std::placeholders::_1));
+    
 }
 
 void NetServiceMqtt::loop()
@@ -110,8 +110,10 @@ void NetServiceMqtt::loop()
     }    
 }
 
-void NetServiceMqtt::callbackFunction(const MqttClient *, const Topic &topic, const char *payload, size_t)
+void MqttReceiver::onPublish(const MqttClient *source, const Topic &topic, const char *payload, size_t /* length */)
 {
-    
-    Serial << "--> Callback [" << topic.c_str() << "] [" << payload << "]" << endl;
+    Serial
+        << "   * MqttReceiver received topic (" << topic.c_str() << ")"
+        /*<< " from (" << source->id() << "), "*/
+        << " payload: (" << payload << ')' << endl;
 }
